@@ -53,7 +53,7 @@ Here, we are using Voigt-notation, defining the compliance of the material with 
       \begin{eqnarray}
       \begin{bmatrix} e_{11} \\ e_{22} \\ 2 e_{12} \end{bmatrix} &=&
       \begin{bmatrix} 1/E_1 & -\frac{\nu_{12}}{E1} & 0 \\
-                     -\frac{\nu_{12}}{E1} & 1/E_1   & 0 \\
+                     -\frac{\nu_{12}}{E1} & 1/E_2   & 0 \\
                      0 & 0 & \frac{1}{G_{12}}
       \end{bmatrix}
       =  \begin{bmatrix} \sigma_{11} \\ \sigma_{22} \\  \sigma_{12} \end{bmatrix}
