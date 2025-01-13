@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Minimal example for plane elastostatics &#8212; FEniCSx - Documented Examples UACh</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=a746c00c" />
+    <link rel="stylesheet" type="text/css" href="../_static/agogo.css?v=08520df9" />
+    <script src="../_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Plane elastostatics with two different isotropic materials" href="HeteroElast.html" />
+    <link rel="prev" title="Linear Elastostatics" href="LinearElastostatics.html" /> 
+  </head><body>
+    <div class="header-wrapper" role="banner">
+      <div class="header">
+        <div class="headertitle"><a
+          href="../index.html">FEniCSx - Documented Examples UACh</a></div>
+        <div class="rel" role="navigation" aria-label="Related">
+          <a href="LinearElastostatics.html" title="Linear Elastostatics"
+             accesskey="P">previous</a> |
+          <a href="HeteroElast.html" title="Plane elastostatics with two different isotropic materials"
+             accesskey="N">next</a> |
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a>
+        </div>
+       </div>
+    </div>
+
+    <div class="content-wrapper">
+      <div class="content">
+        <div class="document">
+            
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="minimal-example-for-plane-elastostatics">
+<span id="target-minimalexamplepes"></span><h1>Minimal example for plane elastostatics<a class="headerlink" href="#minimal-example-for-plane-elastostatics" title="Link to this heading">¶</a></h1>
+<p>This is a minimal example for plane elasticity. It will be used as point of departure for the
+remaining examples in this part.</p>
+<p>We consider a plane problem of linear elasticity. Considering a square with given dimension  <span class="math notranslate nohighlight">\(h\)</span>, i.e.,  a domain
+<span class="math notranslate nohighlight">\(\Omega = (0,h) \times (0,h)\)</span>,
+the governing field equations in  <span class="math notranslate nohighlight">\(\Omega\)</span> are</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{eqnarray}
+  \nabla \cdot \sigma + \mathbf{f} &amp;=&amp; 0 \\
+               e(\mathbf{u}) &amp;=&amp; \frac{1}{2} \left[ \nabla \mathbf{u} + (\nabla \mathbf{u})^\mathrm{T} \right] \\
+               \sigma &amp;=&amp; C : e(\mathbf{u})
+\end{eqnarray}\end{split}\]</div>
+<p>with stress tensor <span class="math notranslate nohighlight">\(\sigma\)</span>, strain tensor  <span class="math notranslate nohighlight">\(e\)</span>, displacement vector <span class="math notranslate nohighlight">\(\mathbf{u}\)</span>, elasticity
+tensor <span class="math notranslate nohighlight">\(C\)</span>, and volume force vector <span class="math notranslate nohighlight">\(\mathbf{f}\)</span>.</p>
+<p>In view of problems to be addressed later on, the square consists of three horizontal stripes. At the bottom
+<span class="math notranslate nohighlight">\(\partial \Omega_\mathrm{B}\)</span>, the square is completely fixed, whereas at the
+left boundary (<span class="math notranslate nohighlight">\(\partial \Omega_\mathrm{L}\)</span>), only the horizontal displacement is blocked. In addition,
+a vertical displacement <span class="math notranslate nohighlight">\(\bar{u}_2\)</span> is prescribed at the top (<span class="math notranslate nohighlight">\(\partial \Omega_\mathrm{T}\)</span>).
+Furthermore, a volume force can be applied.</p>
+<p>The corresponding variational problem reads</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{eqnarray}
+  \int \limits_\Omega  \sigma : e(\mathbf{v}) \, \mathrm{d}^2 x -  \int \limits_\Omega  {f} \cdot \mathbf{v}
+  \, \mathrm{d}^2 x   &amp;=&amp; 0 \\
+               \mathbf{u} &amp;=&amp; \mathbf{0} \quad \mathrm{~at~} \partial \Omega_{\mathrm{B}} \\
+               u_1 &amp;=&amp; 0 \quad \mathrm{~at~} \partial \Omega_{\mathrm{L}} \\
+               u_2 &amp;=&amp; \bar{u}_2 \quad \mathrm{at~} \partial \Omega_{\mathrm{T}} \\
+\end{eqnarray}\end{split}\]</div>
+<p>with test function <span class="math notranslate nohighlight">\(\mathbf{v} \in V\)</span> and <span class="math notranslate nohighlight">\(\mathbf{v}=\mathbf{0}\)</span> at
+<span class="math notranslate nohighlight">\(\partial  \Omega_\mathrm{B}\)</span>,  <span class="math notranslate nohighlight">\(v_1 = 0\)</span> at <span class="math notranslate nohighlight">\(\partial  \Omega_\mathrm{L}\)</span>
+as well as <span class="math notranslate nohighlight">\(v_2 = 0\)</span> at <span class="math notranslate nohighlight">\(\partial  \Omega_\mathrm{B}\)</span>, but otherwise arbitrary.
+Since, <span class="math notranslate nohighlight">\(\mathbf{u}\)</span> and <span class="math notranslate nohighlight">\(\mathbf{v}\)</span> are vector functions, <span class="math notranslate nohighlight">\(V\)</span> is a vector function space.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>You can download the complete python script
+<a class="reference download internal" download="" href="../_downloads/43298aebb110fd521d601f7722ed3ad8/homPlaneElast.py"><code class="xref download docutils literal notranslate"><span class="pre">homPlaneElast.py</span></code></a></p>
+</div>
+<p>In the following, the main parts of the script are discussed in more detail.
+First, the necessary modules are imported.  Different ways to import module or just specific functions
+of modules exist. Here, <a class="reference external" href="https://betterprogramming.pub/namespacing-with-python-79574d125564">explicit imports</a>  are preferred. The DOLFINx version
+is printed, because there can be changes regarding the implementation depending on the version. At the
+moment DOLFINx version: 0.8.0 is used.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># test homogeneous plane elasticity  </span>
+<span class="c1"># ubuntu Release 18.04.6 LTS (Bionic Beaver) 64-bit</span>
+<span class="c1"># docker version 24.0.2, build cb74dfc</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">dolfinx.fem.petsc</span>
+<span class="kn">import</span> <span class="nn">ufl</span>
+ 
+<span class="kn">from</span> <span class="nn">dolfinx</span>  <span class="kn">import</span> <span class="n">fem</span><span class="p">,</span> <span class="n">io</span><span class="p">,</span> <span class="n">mesh</span><span class="p">,</span> <span class="n">default_scalar_type</span>
+<span class="kn">from</span> <span class="nn">mpi4py</span>   <span class="kn">import</span> <span class="n">MPI</span>
+<span class="kn">from</span> <span class="nn">petsc4py</span> <span class="kn">import</span> <span class="n">PETSc</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;===============================================&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;DOLFINx version: </span><span class="si">{</span><span class="n">dolfinx</span><span class="o">.</span><span class="n">__version__</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;based on GIT commit: </span><span class="si">{</span><span class="n">dolfinx</span><span class="o">.</span><span class="n">git_commit_hash</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;of https://github.com/FEniCS/dolfinx/&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;===============================================&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Next, some general variables are defined, among them the names for the files used for storing
+the results.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1">#---------------------------------------------------------------------</span>
+<span class="c1"># DATA SPECIFICATION</span>
+<span class="c1">#---------------------------------------------------------------------</span>
+<span class="n">nr_elemsX1</span>   <span class="o">=</span> <span class="mi">9</span>                   
+<span class="n">nr_elemsX2</span>   <span class="o">=</span> <span class="mi">9</span>
+<span class="n">strip_height</span> <span class="o">=</span> <span class="mf">1.0</span> 
+<span class="n">plate_height</span> <span class="o">=</span> <span class="mf">3.0</span><span class="o">*</span><span class="n">strip_height</span>
+
+<span class="n">YoungMod</span>     <span class="o">=</span>  <span class="mf">1.e5</span>
+<span class="n">PoissonNr</span>    <span class="o">=</span>  <span class="mf">0.3</span>
+<span class="n">VolumeForce</span>  <span class="o">=</span>  <span class="mf">0.0</span>
+
+<span class="n">res_filename</span> <span class="o">=</span> <span class="s2">&quot;HomPlaneElastResults.xdmf&quot;</span>
+</pre></div>
+</div>
+<p>A mesh of quadrilateral elements defined on a rectangular domain is generated using a built-in function.
+Afterwards, a  compatible vector function space <span class="math notranslate nohighlight">\(V\)</span> is defined. The vector character is explicit due to (gdim, ),
+since gdim=2.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1">#--------------------------------------------------------------------- </span>
+<span class="c1"># MESH</span>
+<span class="c1">#---------------------------------------------------------------------</span>
+<span class="n">my_mesh</span>  <span class="o">=</span> <span class="n">mesh</span><span class="o">.</span><span class="n">create_rectangle</span><span class="p">(</span> <span class="n">comm</span><span class="o">=</span><span class="n">MPI</span><span class="o">.</span><span class="n">COMM_WORLD</span><span class="p">,</span>
+                                  <span class="n">points</span><span class="o">=</span><span class="p">((</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">),</span>
+                                  <span class="p">(</span><span class="n">plate_height</span><span class="p">,</span> <span class="n">plate_height</span><span class="p">)),</span>
+                                  <span class="n">n</span><span class="o">=</span><span class="p">(</span><span class="n">nr_elemsX1</span><span class="p">,</span> <span class="n">nr_elemsX2</span><span class="p">),</span>
+                                  <span class="n">cell_type</span><span class="o">=</span> <span class="n">mesh</span><span class="o">.</span><span class="n">CellType</span><span class="o">.</span><span class="n">quadrilateral</span><span class="p">)</span>
+
+<span class="n">gdim</span> <span class="o">=</span> <span class="n">my_mesh</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">dim</span>
+
+<span class="n">V</span> <span class="o">=</span> <span class="n">fem</span><span class="o">.</span><span class="n">functionspace</span><span class="p">(</span><span class="n">my_mesh</span><span class="p">,</span> <span class="p">(</span><span class="s2">&quot;Lagrange&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="p">(</span><span class="n">gdim</span><span class="p">,</span> <span class="p">)))</span>
+</pre></div>
+</div>
+<p>Implementing homogeneous and inhomogeneous Dirichlet boundary conditions involves a number of steps:</p>
+<ul class="simple">
+<li><p>Define the values for the components of the displacement vector to be prescribed.</p></li>
+<li><p>Define functions to identify the corresponding boundary nodes (vertices) by means of a criterion.</p></li>
+<li><p>Pass through the boundary facets (here edges) checking if the vertices of a facet fulfill the criterion.</p></li>
+<li><p>Identify the corresponding degrees of freedom (dof’s). <strong>If only specific displacement components should
+be prescribed, the corresponding subspaces must be specified</strong>.</p></li>
+<li><p>Assign the prescribed values to the dof’s, specifying again the corresponding subspaces if necessary.</p></li>
+<li><p>Join all Dirichlet boundary conditions in a list.</p></li>
+</ul>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1">#---------------------------------------------------------------------</span>
+<span class="c1"># SUBDOMAINS DIRICHLET BC&#39;S</span>
+<span class="c1">#---------------------------------------------------------------------</span>
+<span class="n">u_Bottom</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span>     <span class="mi">0</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">default_scalar_type</span><span class="p">)</span>
+<span class="n">u_Top</span>    <span class="o">=</span> <span class="o">-</span><span class="mf">0.5</span>
+<span class="n">u_Left</span>   <span class="o">=</span>  <span class="mf">0.0</span>
+
+<span class="k">def</span> <span class="nf">Bottom</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="mi">0</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">Left</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="mi">0</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">Top</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">plate_height</span><span class="p">)</span>
+
+<span class="n">fdim</span> <span class="o">=</span> <span class="n">my_mesh</span><span class="o">.</span><span class="n">topology</span><span class="o">.</span><span class="n">dim</span> <span class="o">-</span> <span class="mi">1</span>
+
+<span class="n">Bottom_facets</span> <span class="o">=</span> <span class="n">mesh</span><span class="o">.</span><span class="n">locate_entities_boundary</span><span class="p">(</span><span class="n">my_mesh</span><span class="p">,</span> <span class="n">fdim</span><span class="p">,</span> <span class="n">Bottom</span><span class="p">)</span>
+<span class="n">Left_facets</span>   <span class="o">=</span> <span class="n">mesh</span><span class="o">.</span><span class="n">locate_entities_boundary</span><span class="p">(</span><span class="n">my_mesh</span><span class="p">,</span> <span class="n">fdim</span><span class="p">,</span> <span class="n">Left</span><span class="p">)</span>
+<span class="n">Top_facets</span>    <span class="o">=</span> <span class="n">mesh</span><span class="o">.</span><span class="n">locate_entities_boundary</span><span class="p">(</span><span class="n">my_mesh</span><span class="p">,</span> <span class="n">fdim</span><span class="p">,</span> <span class="n">Top</span><span class="p">)</span>
+
+<span class="n">Bottom_dofs</span> <span class="o">=</span> <span class="n">fem</span><span class="o">.</span><span class="n">locate_dofs_topological</span><span class="p">(</span><span class="n">V</span><span class="p">,</span> <span class="n">fdim</span><span class="p">,</span> <span class="n">Bottom_facets</span><span class="p">)</span>
+
+<span class="n">Left_dofs</span>   <span class="o">=</span> <span class="n">fem</span><span class="o">.</span><span class="n">locate_dofs_topological</span><span class="p">(</span><span class="n">V</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">fdim</span><span class="p">,</span> <span class="n">Left_facets</span><span class="p">)</span>
+<span class="n">Top_dofs</span>    <span class="o">=</span> <span class="n">fem</span><span class="o">.</span><span class="n">locate_dofs_topological</span><span class="p">(</span><span class="n">V</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span> <span class="n">fdim</span><span class="p">,</span> <span class="n">Top_facets</span><span class="p">)</span>
+
+<span class="n">bcBottom</span> <span class="o">=</span> <span class="n">fem</span><span class="o">.</span><span class="n">dirichletbc</span><span class="p">(</span>  <span class="n">u_Bottom</span><span class="p">,</span>  <span class="n">Bottom_dofs</span><span class="p">,</span> <span class="n">V</span><span class="p">)</span>
+
+<span class="n">bcLeft</span>   <span class="o">=</span> <span class="n">fem</span><span class="o">.</span><span class="n">dirichletbc</span><span class="p">(</span><span class="n">u_Left</span><span class="p">,</span> <span class="n">Left_dofs</span><span class="p">,</span> <span class="n">V</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span>
+<span class="n">bcTop</span>    <span class="o">=</span> <span class="n">fem</span><span class="o">.</span><span class="n">dirichletbc</span><span class="p">(</span><span class="n">u_Top</span> <span class="p">,</span> <span class="n">Top_dofs</span> <span class="p">,</span> <span class="n">V</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+
+<span class="n">bcs</span> <span class="o">=</span> <span class="p">[</span><span class="n">bcBottom</span><span class="p">,</span> <span class="n">bcLeft</span><span class="p">,</span> <span class="n">bcTop</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>Constituve relations are defined for plane stress and plane strain, working eventually with Lame’s
+constants based on Young’s modulus and Poisson’s number.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1">#---------------------------------------------------------------------</span>
+<span class="c1"># CONSTITUTIVE LAW</span>
+<span class="c1">#---------------------------------------------------------------------</span>
+<span class="n">E</span>  <span class="o">=</span> <span class="n">fem</span><span class="o">.</span><span class="n">Constant</span><span class="p">(</span><span class="n">my_mesh</span><span class="p">,</span> <span class="n">YoungMod</span><span class="p">)</span>
+<span class="n">nu</span> <span class="o">=</span> <span class="n">fem</span><span class="o">.</span><span class="n">Constant</span><span class="p">(</span><span class="n">my_mesh</span><span class="p">,</span> <span class="n">PoissonNr</span><span class="p">)</span>
+
+<span class="n">model</span> <span class="o">=</span> <span class="s2">&quot;plane_stress&quot;</span>
+
+<span class="n">mu_c</span>    <span class="o">=</span> <span class="n">E</span><span class="o">/</span><span class="mi">2</span><span class="o">/</span><span class="p">(</span><span class="mi">1</span><span class="o">+</span><span class="n">nu</span><span class="p">)</span>
+<span class="n">lmbda_c</span> <span class="o">=</span> <span class="n">E</span><span class="o">*</span><span class="n">nu</span><span class="o">/</span><span class="p">(</span><span class="mi">1</span><span class="o">+</span><span class="n">nu</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="mi">2</span><span class="o">*</span><span class="n">nu</span><span class="p">)</span>
+
+<span class="k">if</span> <span class="n">model</span> <span class="o">==</span> <span class="s2">&quot;plane_stress&quot;</span><span class="p">:</span>
+    <span class="n">lmbda_c</span> <span class="o">=</span> <span class="mi">2</span><span class="o">*</span><span class="n">mu_c</span><span class="o">*</span><span class="n">lmbda_c</span><span class="o">/</span><span class="p">(</span><span class="n">lmbda_c</span><span class="o">+</span><span class="mi">2</span><span class="o">*</span><span class="n">mu_c</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">epsilon</span><span class="p">(</span><span class="n">u</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">ufl</span><span class="o">.</span><span class="n">sym</span><span class="p">(</span><span class="n">ufl</span><span class="o">.</span><span class="n">grad</span><span class="p">(</span><span class="n">u</span><span class="p">))</span>
+
+<span class="c1"># Stress function</span>
+<span class="k">def</span> <span class="nf">sigma</span><span class="p">(</span><span class="n">u</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">lmbda_c</span><span class="o">*</span><span class="n">ufl</span><span class="o">.</span><span class="n">nabla_div</span><span class="p">(</span><span class="n">u</span><span class="p">)</span><span class="o">*</span><span class="n">ufl</span><span class="o">.</span><span class="n">Identity</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="o">+</span> <span class="mi">2</span><span class="o">*</span><span class="n">mu_c</span><span class="o">*</span><span class="n">epsilon</span><span class="p">(</span><span class="n">u</span><span class="p">)</span>
+
+</pre></div>
+</div>
+<p>The definition of the variational problem is rather straight forward, since  the syntax is almost
+identical with the FEniCs syntax.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1">#---------------------------------------------------------------------</span>
+<span class="c1"># VARIATIONAL PROBLEM</span>
+<span class="c1">#---------------------------------------------------------------------</span>
+<span class="n">u</span> <span class="o">=</span> <span class="n">ufl</span><span class="o">.</span><span class="n">TrialFunction</span><span class="p">(</span><span class="n">V</span><span class="p">)</span>
+<span class="n">v</span> <span class="o">=</span> <span class="n">ufl</span><span class="o">.</span><span class="n">TestFunction</span><span class="p">(</span><span class="n">V</span><span class="p">)</span>
+<span class="n">f</span> <span class="o">=</span> <span class="n">fem</span><span class="o">.</span><span class="n">Constant</span><span class="p">(</span><span class="n">my_mesh</span><span class="p">,</span> <span class="n">default_scalar_type</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="n">VolumeForce</span><span class="p">)))</span>
+<span class="n">a</span> <span class="o">=</span> <span class="n">ufl</span><span class="o">.</span><span class="n">inner</span><span class="p">(</span><span class="n">sigma</span><span class="p">(</span><span class="n">u</span><span class="p">),</span> <span class="n">epsilon</span><span class="p">(</span><span class="n">v</span><span class="p">))</span> <span class="o">*</span> <span class="n">ufl</span><span class="o">.</span><span class="n">dx</span>
+<span class="n">L</span> <span class="o">=</span> <span class="n">ufl</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span> <span class="o">*</span> <span class="n">ufl</span><span class="o">.</span><span class="n">dx</span> 
+
+<span class="n">petsc_opts</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;ksp_type&quot;</span><span class="p">:</span> <span class="s2">&quot;preonly&quot;</span><span class="p">,</span> <span class="s2">&quot;pc_type&quot;</span><span class="p">:</span> <span class="s2">&quot;lu&quot;</span><span class="p">}</span>
+
+<span class="n">problem</span> <span class="o">=</span> <span class="n">fem</span><span class="o">.</span><span class="n">petsc</span><span class="o">.</span><span class="n">LinearProblem</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">L</span><span class="p">,</span> <span class="n">bcs</span><span class="p">,</span> <span class="n">petsc_options</span><span class="o">=</span><span class="n">petsc_opts</span><span class="p">)</span>
+<span class="n">uh</span>      <span class="o">=</span> <span class="n">problem</span><span class="o">.</span><span class="n">solve</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>After solving the problem, the results can be written into one or more files to be processed, for
+instantce with ParaView. Displacement results are given at the nodes of the mesh. Therefore, they
+can be written directly into the result file(s). Stresses on the other hand are computed at integration
+points and the results must therefore be processed before writing them into the output file(s).</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1">#---------------------------------------------------------------------</span>
+<span class="c1"># RESULTS</span>
+<span class="c1">#---------------------------------------------------------------------</span>
+<span class="n">V0</span>      <span class="o">=</span> <span class="n">fem</span><span class="o">.</span><span class="n">functionspace</span><span class="p">(</span><span class="n">my_mesh</span><span class="p">,</span> <span class="p">(</span><span class="s2">&quot;Lagrange&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="p">(</span><span class="n">gdim</span><span class="p">,</span> <span class="n">gdim</span><span class="p">)))</span>
+<span class="n">sig_exp</span> <span class="o">=</span> <span class="n">fem</span><span class="o">.</span><span class="n">Expression</span><span class="p">(</span><span class="n">sigma</span><span class="p">(</span><span class="n">uh</span><span class="p">),</span> <span class="n">V0</span><span class="o">.</span><span class="n">element</span><span class="o">.</span><span class="n">interpolation_points</span><span class="p">())</span>
+<span class="n">sig</span>     <span class="o">=</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span><span class="p">(</span><span class="n">V0</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Stress&quot;</span><span class="p">)</span>
+<span class="n">sig</span><span class="o">.</span><span class="n">interpolate</span><span class="p">(</span><span class="n">sig_exp</span><span class="p">)</span>
+
+<span class="n">out_ASCII</span> <span class="o">=</span> <span class="kc">False</span>
+<span class="k">if</span> <span class="n">out_ASCII</span><span class="p">:</span>
+   <span class="n">encoding</span> <span class="o">=</span> <span class="n">dolfinx</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">XDMFFile</span><span class="o">.</span><span class="n">Encoding</span><span class="o">.</span><span class="n">ASCII</span>
+<span class="k">else</span><span class="p">:</span> 
+   <span class="n">encoding</span> <span class="o">=</span> <span class="n">dolfinx</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">XDMFFile</span><span class="o">.</span><span class="n">Encoding</span><span class="o">.</span><span class="n">HDF5</span>
+
+
+<span class="n">xdmffile</span> <span class="o">=</span> <span class="n">dolfinx</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">XDMFFile</span><span class="p">(</span><span class="n">MPI</span><span class="o">.</span><span class="n">COMM_WORLD</span><span class="p">,</span> <span class="n">res_filename</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="p">)</span>
+
+<span class="n">xdmffile</span><span class="o">.</span><span class="n">write_mesh</span><span class="p">(</span><span class="n">my_mesh</span><span class="p">)</span>
+<span class="n">uh</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;Displacement&quot;</span>
+<span class="n">xdmffile</span><span class="o">.</span><span class="n">write_function</span><span class="p">(</span><span class="n">uh</span><span class="p">)</span>
+<span class="c1">#sig.name = &quot;Stress&quot;</span>
+<span class="c1">#xdmffile.write_function(sig)</span>
+<span class="n">xdmffile</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+
+
+</pre></div>
+</div>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+        </div>
+        <div class="sidebar">
+          
+          <h3>Table of Contents</h3>
+          <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../Intro/intro.html">Introduction</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="LinearElastostatics.html">Linear Elastostatics</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Minimal example for plane elastostatics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="HeteroElast.html">Plane elastostatics with two different isotropic materials</a></li>
+<li class="toctree-l2"><a class="reference internal" href="HeteroOrthoElast.html">Plane Elastostatics with Two Different Orthotropic Materials</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../LinearElastodynamics/LinearElastodynamics.html">Linear Elastodynamics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../GeneralAspects/GeneralAspects.html">General aspects</a></li>
+</ul>
+
+          <search role="search">
+            <h3 style="margin-top: 1.5em;">Search</h3>
+            <form class="search" action="../search.html" method="get">
+                <input type="text" name="q" />
+                <input type="submit" value="Go" />
+            </form>
+          </search>
+
+        </div>
+        <div class="clearer"></div>
+      </div>
+    </div>
+
+    <div class="footer-wrapper">
+      <div class="footer">
+        <div class="left">
+          <div role="navigation" aria-label="Related">
+            <a href="LinearElastostatics.html" title="Linear Elastostatics"
+              >previous</a> |
+            <a href="HeteroElast.html" title="Plane elastostatics with two different isotropic materials"
+              >next</a> |
+            <a href="../genindex.html" title="General Index"
+              >index</a>
+          </div>
+          <div role="note" aria-label="source link">
+              <br/>
+              <a href="../_sources/LinearElastostatics/BasicExampleES.rst.txt"
+                rel="nofollow">Show Source</a>
+          </div>
+        </div>
+
+        <div class="right">
+          
+    <div class="footer" role="contentinfo">
+    &#169; Copyright 2024, Uwe Muhlich.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.1.3.
+    </div>
+        </div>
+        <div class="clearer"></div>
+      </div>
+    </div>
+
+  </body>
+</html>

@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>General aspects &#8212; FEniCSx - Documented Examples UACh</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=a746c00c" />
+    <link rel="stylesheet" type="text/css" href="../_static/agogo.css?v=08520df9" />
+    <script src="../_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Example" href="dirichletBCsExample.html" />
+    <link rel="prev" title="Dirichlet boundary conditions" href="DirichletBCs.html" /> 
+  </head><body>
+    <div class="header-wrapper" role="banner">
+      <div class="header">
+        <div class="headertitle"><a
+          href="../index.html">FEniCSx - Documented Examples UACh</a></div>
+        <div class="rel" role="navigation" aria-label="Related">
+          <a href="DirichletBCs.html" title="Dirichlet boundary conditions"
+             accesskey="P">previous</a> |
+          <a href="dirichletBCsExample.html" title="Example"
+             accesskey="N">next</a> |
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a>
+        </div>
+       </div>
+    </div>
+
+    <div class="content-wrapper">
+      <div class="content">
+        <div class="document">
+            
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="general-aspects">
+<h1>General aspects<a class="headerlink" href="#general-aspects" title="Link to this heading">¶</a></h1>
+<p>For individuals accustomed to prescribing boundary conditions directly at nodes—such as with Abaqus, Nastran input files, or Code-Aster command files—or even at geometric points, like in the MATLAB PDE Toolbox, transitioning to prescribe Dirichlet boundary conditions in FeniCSx can be challenging.</p>
+<p>A basic understanding of finite element meshes and FEM function spaces is helpful, if not essential, for overcoming this challenge. It also proves invaluable when addressing other aspects of FeniCSx. A finite element mesh, also called grid, represents a discretization of a domain. It carries  geometric and topological information, but it lacks details about the physics of the problem. Therefore, it is only one component of modeling a boundary value problem but, on the other hand,  it can be used for different boundary value problems.</p>
+<p>A finite element function space <span class="math notranslate nohighlight">\(V_h\)</span> consists of the mesh, a compatible interpolation basis, and information about the space’s dimension, dim(<span class="math notranslate nohighlight">\(V_h\)</span>). This dimension is dictated by the nature of the degrees of freedom (DOFs), which directly influence the definition of Dirichlet boundary conditions. For instance, in thermal problems, the DOFs are scalar values representing temperatures, whereas in continuum mechanics problems, the DOFs correspond to vectorial displacements.</p>
+<p>Mesh information can be organized in various ways. A common approach, such as that used in Abaqus, involves defining the mesh through a node-coordinate list and an element-node list. In this context, the definition of  <span class="math notranslate nohighlight">\(V_h\)</span>  is implicit, as the chosen element type inherently includes details about the interpolation basis and the DOFs’ nature.</p>
+<p>Finite element meshes are closely linked to graph theory since a mesh can be represented as a graph, enabling the application of graph-theoretical concepts for analysis and optimization. In three dimensions, a mesh hierarchy consists of objects of increasing dimension: vertices (dim = 0), edges (dim = 1), facets (dim = 2), and cells (dim = 3). Vertices and cells are often referred to as “nodes” and “volumes,” respectively. The relationships among these objects, independent of their geometry, define the topology of the mesh. In the context of Dirichlet boundary conditions, sets of boundary facets or edges are particularly useful. The geometry, however, is fully defined by the node-coordinate list (see, e.g., <a class="footnote-reference brackets" href="#f1" id="id1" role="doc-noteref"><span class="fn-bracket">[</span>1<span class="fn-bracket">]</span></a>).</p>
+<p>In two dimensions, cells have a dimensionality of two, and edges and facets coincide. Thus, the hierarchy simplifies to nodes (dim = 0), edges (dim = 1), and cells (dim= 2). All mesh information can be derived from a node-coordinate list, a cell-node list, and a specified order for defining the nodes of each cell.</p>
+<p>To illustrate some of basic aspects, we consider the following two-dimensional mesh example.</p>
+<figure class="align-default">
+<a class="reference internal image-reference" href="../_images/meshGraph.png"><img alt="../_images/meshGraph.png" src="../_images/meshGraph.png" style="width: 403.0px; height: 222.75px;" />
+</a>
+</figure>
+<p class="rubric">Footnotes</p>
+<aside class="footnote-list brackets">
+<aside class="footnote brackets" id="f1" role="doc-footnote">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id1">1</a><span class="fn-bracket">]</span></span>
+<p>Logg A.: Efficient representation of computational meshes.
+In Int. J. Computational Science and Engineering, Vol. 4, No. 4, 2009</p>
+</aside>
+</aside>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+        </div>
+        <div class="sidebar">
+          
+          <h3>Table of Contents</h3>
+          <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../Intro/intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../LinearElastostatics/LinearElastostatics.html">Linear Elastostatics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../LinearElastodynamics/LinearElastodynamics.html">Linear Elastodynamics</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="GeneralAspects.html">General aspects</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="DirichletBCs.html">Dirichlet boundary conditions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ComplexEigenproblems.html">Complex Eigenvalue Problems</a></li>
+</ul>
+</li>
+</ul>
+
+          <search role="search">
+            <h3 style="margin-top: 1.5em;">Search</h3>
+            <form class="search" action="../search.html" method="get">
+                <input type="text" name="q" />
+                <input type="submit" value="Go" />
+            </form>
+          </search>
+
+        </div>
+        <div class="clearer"></div>
+      </div>
+    </div>
+
+    <div class="footer-wrapper">
+      <div class="footer">
+        <div class="left">
+          <div role="navigation" aria-label="Related">
+            <a href="DirichletBCs.html" title="Dirichlet boundary conditions"
+              >previous</a> |
+            <a href="dirichletBCsExample.html" title="Example"
+              >next</a> |
+            <a href="../genindex.html" title="General Index"
+              >index</a>
+          </div>
+          <div role="note" aria-label="source link">
+              <br/>
+              <a href="../_sources/GeneralAspects/meshesIntro.rst.txt"
+                rel="nofollow">Show Source</a>
+          </div>
+        </div>
+
+        <div class="right">
+          
+    <div class="footer" role="contentinfo">
+    &#169; Copyright 2024, Uwe Muhlich.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.1.3.
+    </div>
+        </div>
+        <div class="clearer"></div>
+      </div>
+    </div>
+
+  </body>
+</html>

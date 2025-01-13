@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Introduction &#8212; FEniCSx - Documented Examples UACh</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=a746c00c" />
+    <link rel="stylesheet" type="text/css" href="../_static/agogo.css?v=08520df9" />
+    <script src="../_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Linear Elastostatics" href="../LinearElastostatics/LinearElastostatics.html" />
+    <link rel="prev" title="Welcome to FEniCSx Examples UACh!" href="../index.html" /> 
+  </head><body>
+    <div class="header-wrapper" role="banner">
+      <div class="header">
+        <div class="headertitle"><a
+          href="../index.html">FEniCSx - Documented Examples UACh</a></div>
+        <div class="rel" role="navigation" aria-label="Related">
+          <a href="../index.html" title="Welcome to FEniCSx Examples UACh!"
+             accesskey="P">previous</a> |
+          <a href="../LinearElastostatics/LinearElastostatics.html" title="Linear Elastostatics"
+             accesskey="N">next</a> |
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a>
+        </div>
+       </div>
+    </div>
+
+    <div class="content-wrapper">
+      <div class="content">
+        <div class="document">
+            
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="introduction">
+<h1>Introduction<a class="headerlink" href="#introduction" title="Link to this heading">¶</a></h1>
+<section id="the-pros-and-cons-of-using-fenicsx-for-research-in-engineering">
+<h2>The Pros and Cons of Using FEniCSx for Research in Engineering<a class="headerlink" href="#the-pros-and-cons-of-using-fenicsx-for-research-in-engineering" title="Link to this heading">¶</a></h2>
+<p>FEniCS has long been a well-regarded tool in the research community for solving
+partial differential equations (PDEs). With the development of FEniCSx, there is
+a strong expectation that it will be embraced in the same way, if not more so.</p>
+<p>The FEniCSx open-source project reflects the work of highly skilled and ambitious
+developers, and its integration into contemporary research is a testament to
+their efforts</p>
+<section id="advantages-of-using-fenicsx">
+<h3>Advantages of using FEniCSx<a class="headerlink" href="#advantages-of-using-fenicsx" title="Link to this heading">¶</a></h3>
+<p>One of the most appealing aspects of FEniCSx is its high-level programming
+interface, particularly the Unified Form Language (UFL), which simplifies the
+process of formulating and solving PDEs. For standard problems, the ability to
+create solutions with just a few lines of intuitive code is impressive.</p>
+<p>This efficiency allows researchers to focus more on the problem at hand rather
+than getting bogged down in implementation details. The ease with which you can
+solve relatively simple problems with FEniCSx is one of its key strengths.</p>
+<p>A key advantage of FEniCSx is its open-source nature, offering a free
+alternative to costly commercial FEM software. While commercial tools are seen
+as mature but expensive, FEniCSx enables academic researchers to collaborate
+and innovate without financial constraints.</p>
+</section>
+<section id="challenges-of-using-fenicsx">
+<h3>Challenges of using FEniCSx<a class="headerlink" href="#challenges-of-using-fenicsx" title="Link to this heading">¶</a></h3>
+<p>While FEniCSx shines in handling standard problems, its use becomes more
+challenging when addressing non-standard or highly specialized research
+questions. To effectively apply FEniCSx to these types of problems, a deep
+understanding is required—not only of the theoretical foundations of FEM but
+also of the software’s inner workings.
+This dual requirement can present a barrier for students and researchers
+who are not computational experts.</p>
+</section>
+</section>
+<section id="planned-topics-and-examples">
+<h2>Planned Topics and Examples<a class="headerlink" href="#planned-topics-and-examples" title="Link to this heading">¶</a></h2>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>This page is a work in progress and may be updated occasionally.</p>
+</div>
+<p>Linear Elastostatics</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="../LinearElastostatics/BasicExampleES.html#target-minimalexamplepes"><span class="std std-ref">Basic plane problem</span></a>:   ✔</p></li>
+<li><p><a class="reference internal" href="../LinearElastostatics/HeteroElast.html#target-pes2mat"><span class="std std-ref">Plane problem with two isotropic materials</span></a>:   ✔</p></li>
+<li><p><a class="reference internal" href="../LinearElastostatics/HeteroOrthoElast.html#target-pesortho2mat"><span class="std std-ref">Plane problem with two orthotropic materials</span></a>:   ✔</p></li>
+<li><p>Basic 3-d problem</p></li>
+<li><p>3-d problem with different materials</p></li>
+<li><p>Homogenization method with fluctuations as primary unknowns (method I)</p></li>
+<li><p>Homogenization method with total displacements as primary unknowns (method II)
+using the multiple-point-constraint feature of Dolfinx</p></li>
+</ul>
+<p>Linear Elastodynamics</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="../GeneralAspects/exampleSciPyReal.html#target-modalga"><span class="std std-ref">Modal analysis, minimal example</span></a>:   ✔</p></li>
+<li><p>Modal analysis in-plane</p></li>
+<li><p>Modal analysis in-plane with hole</p></li>
+<li><p>Dispersion curves 1-d periodic cells</p></li>
+<li><p>Dispersion curves 2-d periodic cells</p></li>
+<li><p>Dispersion curves 3-d periodic cells</p></li>
+<li><p>Modal analysis CLT plate</p></li>
+</ul>
+</section>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+        </div>
+        <div class="sidebar">
+          
+          <h3>Table of Contents</h3>
+          <ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Introduction</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#the-pros-and-cons-of-using-fenicsx-for-research-in-engineering">The Pros and Cons of Using FEniCSx for Research in Engineering</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#planned-topics-and-examples">Planned Topics and Examples</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../LinearElastostatics/LinearElastostatics.html">Linear Elastostatics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../LinearElastodynamics/LinearElastodynamics.html">Linear Elastodynamics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../GeneralAspects/GeneralAspects.html">General aspects</a></li>
+</ul>
+
+          <search role="search">
+            <h3 style="margin-top: 1.5em;">Search</h3>
+            <form class="search" action="../search.html" method="get">
+                <input type="text" name="q" />
+                <input type="submit" value="Go" />
+            </form>
+          </search>
+
+        </div>
+        <div class="clearer"></div>
+      </div>
+    </div>
+
+    <div class="footer-wrapper">
+      <div class="footer">
+        <div class="left">
+          <div role="navigation" aria-label="Related">
+            <a href="../index.html" title="Welcome to FEniCSx Examples UACh!"
+              >previous</a> |
+            <a href="../LinearElastostatics/LinearElastostatics.html" title="Linear Elastostatics"
+              >next</a> |
+            <a href="../genindex.html" title="General Index"
+              >index</a>
+          </div>
+          <div role="note" aria-label="source link">
+              <br/>
+              <a href="../_sources/Intro/intro.rst.txt"
+                rel="nofollow">Show Source</a>
+          </div>
+        </div>
+
+        <div class="right">
+          
+    <div class="footer" role="contentinfo">
+    &#169; Copyright 2024, Uwe Muhlich.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.1.3.
+    </div>
+        </div>
+        <div class="clearer"></div>
+      </div>
+    </div>
+
+  </body>
+</html>
