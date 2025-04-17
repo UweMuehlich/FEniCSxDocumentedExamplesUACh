@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Example &#8212; FEniCSx - Documented Examples UACh</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=a746c00c" />
+    <link rel="stylesheet" type="text/css" href="../_static/agogo.css?v=08520df9" />
+    <script src="../_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Complex Eigenvalue Problems" href="ComplexEigenproblems.html" />
+    <link rel="prev" title="General aspects" href="meshesIntro.html" /> 
+  </head><body>
+    <div class="header-wrapper" role="banner">
+      <div class="header">
+        <div class="headertitle"><a
+          href="../index.html">FEniCSx - Documented Examples UACh</a></div>
+        <div class="rel" role="navigation" aria-label="Related">
+          <a href="meshesIntro.html" title="General aspects"
+             accesskey="P">previous</a> |
+          <a href="ComplexEigenproblems.html" title="Complex Eigenvalue Problems"
+             accesskey="N">next</a> |
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a>
+        </div>
+       </div>
+    </div>
+
+    <div class="content-wrapper">
+      <div class="content">
+        <div class="document">
+            
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="example">
+<h1>Example<a class="headerlink" href="#example" title="Link to this heading">¶</a></h1>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>You can download the complete python script
+<a class="reference download internal" download="" href="../_downloads/60e1999760d3971a940788d4c2105198/dirichletBcs.py"><code class="xref download docutils literal notranslate"><span class="pre">dirichleBcs.py</span></code></a></p>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="linenos">  1</span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="linenos">  2</span><span class="kn">import</span> <span class="nn">ufl</span>
+<span class="linenos">  3</span><span class="kn">import</span> <span class="nn">dolfinx.fem.petsc</span>
+<span class="linenos">  4</span>
+<span class="linenos">  5</span><span class="kn">from</span> <span class="nn">dolfinx</span> <span class="kn">import</span> <span class="n">fem</span><span class="p">,</span> <span class="n">mesh</span><span class="p">,</span> <span class="n">default_scalar_type</span>
+<span class="linenos">  6</span><span class="kn">from</span> <span class="nn">mpi4py</span>  <span class="kn">import</span> <span class="n">MPI</span>
+<span class="linenos">  7</span>
+<span class="linenos">  8</span><span class="nb">print</span><span class="p">(</span><span class="s2">&quot;--------------------------------------------------------------&quot;</span><span class="p">)</span>
+<span class="linenos">  9</span><span class="nb">print</span><span class="p">(</span><span class="s2">&quot;--------    ILLUSTRATING DIRICHLET BC&#39;S   --------------------&quot;</span><span class="p">)</span>
+<span class="linenos"> 10</span><span class="nb">print</span><span class="p">(</span><span class="s2">&quot;--------------------------------------------------------------&quot;</span><span class="p">)</span>
+<span class="linenos"> 11</span>
+<span class="linenos"> 12</span><span class="n">L0</span><span class="p">,</span> <span class="n">L1</span><span class="p">,</span> <span class="n">L2</span> <span class="o">=</span> <span class="mf">10.</span><span class="p">,</span> <span class="mf">5.</span><span class="p">,</span> <span class="mf">1.</span>
+<span class="linenos"> 13</span><span class="n">n0</span><span class="p">,</span> <span class="n">n1</span><span class="p">,</span> <span class="n">n2</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>  <span class="mi">5</span><span class="p">,</span>  <span class="mi">4</span>
+<span class="linenos"> 14</span><span class="n">my_mesh</span>  <span class="o">=</span> <span class="n">mesh</span><span class="o">.</span><span class="n">create_box</span><span class="p">(</span> <span class="n">comm</span><span class="o">=</span><span class="n">MPI</span><span class="o">.</span><span class="n">COMM_WORLD</span><span class="p">,</span>                    <span class="c1"># creating mesh</span>
+<span class="linenos"> 15</span>                            <span class="n">points</span><span class="o">=</span><span class="p">((</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">),</span>
+<span class="linenos"> 16</span>                                    <span class="p">(</span><span class="n">L0</span><span class="p">,</span> <span class="n">L1</span><span class="p">,</span> <span class="n">L2</span><span class="p">)),</span>
+<span class="linenos"> 17</span>                            <span class="n">n</span><span class="o">=</span><span class="p">(</span><span class="n">n0</span><span class="p">,</span> <span class="n">n1</span><span class="p">,</span> <span class="n">n2</span><span class="p">),</span>
+<span class="linenos"> 18</span>                            <span class="n">cell_type</span><span class="o">=</span> <span class="n">mesh</span><span class="o">.</span><span class="n">CellType</span><span class="o">.</span><span class="n">hexahedron</span><span class="p">)</span>
+<span class="linenos"> 19</span>
+<span class="linenos"> 20</span><span class="n">gdim</span> <span class="o">=</span> <span class="n">my_mesh</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">dim</span>
+<span class="linenos"> 21</span><span class="n">tdim</span> <span class="o">=</span> <span class="n">my_mesh</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">dim</span>
+<span class="linenos"> 22</span><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;gdim </span><span class="si">{</span><span class="n">gdim</span><span class="si">}</span><span class="s2">, t_dim </span><span class="si">{</span><span class="n">tdim</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="linenos"> 23</span>
+<span class="linenos"> 24</span><span class="n">V</span> <span class="o">=</span> <span class="n">fem</span><span class="o">.</span><span class="n">functionspace</span><span class="p">(</span><span class="n">my_mesh</span><span class="p">,</span> <span class="p">(</span><span class="s2">&quot;Lagrange&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="p">(</span><span class="n">gdim</span><span class="p">,</span> <span class="p">)))</span>           <span class="c1"># creating  </span>
+<span class="linenos"> 25</span>                                                                    <span class="c1"># function space</span>
+<span class="linenos"> 26</span><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;V.element </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">V</span><span class="o">.</span><span class="n">element</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="linenos"> 27</span><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;V.dofmap        </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">V</span><span class="o">.</span><span class="n">dofmap</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="linenos"> 28</span>
+<span class="linenos"> 29</span><span class="c1">#--------------------------------------------------------------------</span>
+<span class="linenos"> 30</span><span class="c1"># BOUNDARY CONDITIONS</span>
+<span class="linenos"> 31</span><span class="c1">#</span>
+<span class="linenos"> 32</span><span class="c1"># I) block all displacements on the x[0]=0 plane</span>
+<span class="linenos"> 33</span><span class="c1">#--------------------------------------------------------------------</span>
+<span class="linenos"> 34</span><span class="k">def</span> <span class="nf">True_if_x0_is_zero</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+<span class="linenos"> 35</span><span class="w">    </span><span class="sd">&quot;&quot;&quot; locate if on the x0 = 0.0 plane &quot;&quot;&quot;</span>
+<span class="linenos"> 36</span>    <span class="c1">#print(x.T) # turns out to be just to be a node-coordinate list</span>
+<span class="linenos"> 37</span>    <span class="c1">#print(np.isclose(x[0], 0.0))</span>
+<span class="linenos"> 38</span>    <span class="k">return</span>  <span class="n">np</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="mf">0.0</span><span class="p">)</span>
+<span class="linenos"> 39</span>
+<span class="linenos"> 40</span><span class="n">dof_g_list</span> <span class="o">=</span> <span class="n">fem</span><span class="o">.</span><span class="n">locate_dofs_geometrical</span><span class="p">(</span><span class="n">V</span><span class="p">,</span> <span class="n">True_if_x0_is_zero</span><span class="p">)</span>  <span class="c1"># finds all points but</span>
+<span class="linenos"> 41</span>                                                                  <span class="c1"># cannot work with</span>
+<span class="linenos"> 42</span>                                                                  <span class="c1"># subspace V.sub(i)</span>
+<span class="linenos"> 43</span>
+<span class="linenos"> 44</span><span class="n">boundary_facets</span> <span class="o">=</span> <span class="n">mesh</span><span class="o">.</span><span class="n">locate_entities_boundary</span><span class="p">(</span><span class="n">my_mesh</span><span class="p">,</span> <span class="n">gdim</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">True_if_x0_is_zero</span><span class="p">)</span>
+<span class="linenos"> 45</span><span class="n">boundary_edges</span>  <span class="o">=</span> <span class="n">mesh</span><span class="o">.</span><span class="n">locate_entities_boundary</span><span class="p">(</span><span class="n">my_mesh</span><span class="p">,</span> <span class="n">gdim</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="n">True_if_x0_is_zero</span><span class="p">)</span>
+<span class="linenos"> 46</span><span class="n">boundary_nodes</span>  <span class="o">=</span> <span class="n">mesh</span><span class="o">.</span><span class="n">locate_entities_boundary</span><span class="p">(</span><span class="n">my_mesh</span><span class="p">,</span> <span class="n">gdim</span><span class="o">-</span><span class="mi">3</span><span class="p">,</span> <span class="n">True_if_x0_is_zero</span><span class="p">)</span>
+<span class="linenos"> 47</span>
+<span class="linenos"> 48</span><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Dirichlet I&quot;</span><span class="p">)</span>  
+<span class="linenos"> 49</span><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;boundary facets on X[0] = 0 plane:  </span><span class="si">{</span><span class="n">boundary_facets</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>  
+<span class="linenos"> 50</span><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;boundary edges  on X[0] = 0 plane:  </span><span class="si">{</span><span class="n">boundary_edges</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="linenos"> 51</span><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;boundary nodes  on X[0] = 0 plane:  </span><span class="si">{</span><span class="n">boundary_nodes</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="linenos"> 52</span>
+<span class="linenos"> 53</span><span class="n">facets_dofs</span> <span class="o">=</span> <span class="n">fem</span><span class="o">.</span><span class="n">locate_dofs_topological</span><span class="p">(</span><span class="n">V</span><span class="p">,</span> <span class="n">gdim</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">boundary_facets</span><span class="p">)</span>
+<span class="linenos"> 54</span>
+<span class="linenos"> 55</span><span class="n">my_mesh</span><span class="o">.</span><span class="n">topology</span><span class="o">.</span><span class="n">create_connectivity</span><span class="p">(</span><span class="n">gdim</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="n">gdim</span><span class="p">)</span> 
+<span class="linenos"> 56</span>
+<span class="linenos"> 57</span><span class="n">edge_dofs</span>   <span class="o">=</span> <span class="n">fem</span><span class="o">.</span><span class="n">locate_dofs_topological</span><span class="p">(</span><span class="n">V</span><span class="p">,</span> <span class="n">gdim</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="n">boundary_edges</span><span class="p">)</span>
+<span class="linenos"> 58</span>
+<span class="linenos"> 59</span><span class="n">my_mesh</span><span class="o">.</span><span class="n">topology</span><span class="o">.</span><span class="n">create_connectivity</span><span class="p">(</span><span class="n">gdim</span><span class="o">-</span><span class="mi">3</span><span class="p">,</span> <span class="n">gdim</span><span class="p">)</span> 
+<span class="linenos"> 60</span>
+<span class="linenos"> 61</span><span class="n">node_dofs</span>   <span class="o">=</span> <span class="n">fem</span><span class="o">.</span><span class="n">locate_dofs_topological</span><span class="p">(</span><span class="n">V</span><span class="p">,</span> <span class="n">gdim</span><span class="o">-</span><span class="mi">3</span><span class="p">,</span> <span class="n">boundary_nodes</span><span class="p">)</span>
+<span class="linenos"> 62</span>
+<span class="linenos"> 63</span><span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">All four methods give the same dofs&quot;</span><span class="p">)</span>
+<span class="linenos"> 64</span><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;geom_dofs   on X[0] = 0 plane:  </span><span class="si">{</span><span class="n">dof_g_list</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>  
+<span class="linenos"> 65</span><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;facets_dofs on X[0] = 0 plane:  </span><span class="si">{</span><span class="n">facets_dofs</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>  
+<span class="linenos"> 66</span><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;edge_  dofs on X[0] = 0 plane:  </span><span class="si">{</span><span class="n">edge_dofs</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="linenos"> 67</span><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;node  _dofs on X[0] = 0 plane:  </span><span class="si">{</span><span class="n">node_dofs</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="linenos"> 68</span>
+<span class="linenos"> 69</span><span class="n">u_bcI</span>    <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">default_scalar_type</span><span class="p">)</span>
+<span class="linenos"> 70</span>
+<span class="linenos"> 71</span><span class="c1"># The following four methods lead the same result</span>
+<span class="linenos"> 72</span><span class="c1">#bcI      = fem.dirichletbc(u_bcI,dof_g_list, V)</span>
+<span class="linenos"> 73</span><span class="c1">#bcI      = fem.dirichletbc(u_bcI,bcI_dofs, V)</span>
+<span class="linenos"> 74</span><span class="c1">#bcI      = fem.dirichletbc(u_bcI,dof_g_list, V)</span>
+<span class="linenos"> 75</span><span class="n">bcI</span>       <span class="o">=</span> <span class="n">fem</span><span class="o">.</span><span class="n">dirichletbc</span><span class="p">(</span><span class="n">u_bcI</span><span class="p">,</span><span class="n">dof_g_list</span><span class="p">,</span> <span class="n">V</span><span class="p">)</span>
+<span class="linenos"> 76</span><span class="c1">#--------------------------------------------------------------------</span>
+<span class="linenos"> 77</span><span class="c1"># II) prescribe u[2]= 0.0  at the edge with coordinates (L0, x[1], 0)</span>
+<span class="linenos"> 78</span><span class="c1">#--------------------------------------------------------------------</span>
+<span class="linenos"> 79</span><span class="k">def</span> <span class="nf">True_if_on_edge</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+<span class="linenos"> 80</span><span class="w">    </span><span class="sd">&quot;&quot;&quot; locates if on the edge with (L0, x[1], 0) &quot;&quot;&quot;</span>
+<span class="linenos"> 81</span>    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">L0</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="mf">0.0</span><span class="p">))</span>
+<span class="linenos"> 82</span>
+<span class="linenos"> 83</span><span class="n">edge_nodes</span>  <span class="o">=</span> <span class="n">mesh</span><span class="o">.</span><span class="n">locate_entities_boundary</span><span class="p">(</span><span class="n">my_mesh</span><span class="p">,</span> <span class="n">gdim</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="n">True_if_on_edge</span><span class="p">)</span>
+<span class="linenos"> 84</span>
+<span class="linenos"> 85</span><span class="n">my_mesh</span><span class="o">.</span><span class="n">topology</span><span class="o">.</span><span class="n">create_connectivity</span><span class="p">(</span><span class="n">gdim</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="n">gdim</span><span class="p">)</span> 
+<span class="linenos"> 86</span>
+<span class="linenos"> 87</span><span class="n">edge_dofs</span>  <span class="o">=</span> <span class="n">fem</span><span class="o">.</span><span class="n">locate_dofs_topological</span><span class="p">(</span><span class="n">V</span><span class="p">,</span> <span class="n">gdim</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="n">edge_nodes</span><span class="p">)</span>
+<span class="linenos"> 88</span><span class="n">edge_dofs2</span> <span class="o">=</span> <span class="n">fem</span><span class="o">.</span><span class="n">locate_dofs_topological</span><span class="p">(</span><span class="n">V</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="mi">2</span><span class="p">),</span> <span class="n">gdim</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="n">edge_nodes</span><span class="p">)</span>
+<span class="linenos"> 89</span>
+<span class="linenos"> 90</span><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Dirichlet II&quot;</span><span class="p">)</span>  
+<span class="linenos"> 91</span><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;edge_dofs  </span><span class="si">{</span><span class="n">edge_dofs</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="linenos"> 92</span><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;edge_dofs2 </span><span class="si">{</span><span class="n">edge_dofs2</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="linenos"> 93</span>
+<span class="linenos"> 94</span><span class="n">u_bc_edge</span>   <span class="o">=</span> <span class="mf">0.0</span>
+<span class="linenos"> 95</span><span class="n">bc_edge</span>     <span class="o">=</span> <span class="n">fem</span><span class="o">.</span><span class="n">dirichletbc</span><span class="p">(</span><span class="n">u_bc_edge</span><span class="p">,</span><span class="n">edge_dofs2</span><span class="p">,</span> <span class="n">V</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span>
+<span class="linenos"> 96</span><span class="c1">#--------------------------------------------------------------------</span>
+<span class="linenos"> 97</span><span class="c1"># III) prescribe u[0], u[1] and u[2] at corner node (L0,L1,L2)</span>
+<span class="linenos"> 98</span><span class="c1">#--------------------------------------------------------------------</span>
+<span class="linenos"> 99</span><span class="k">def</span> <span class="nf">True_if_corner</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+<span class="linenos">100</span><span class="w">    </span><span class="sd">&quot;&quot;&quot; locates if corner point (L0, L1, L2) &quot;&quot;&quot;</span>
+<span class="linenos">101</span>    <span class="n">check</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span>
+<span class="linenos">102</span>              <span class="n">np</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">L0</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">L1</span><span class="p">)),</span> 
+<span class="linenos">103</span>              <span class="n">np</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">L2</span><span class="p">))</span>
+<span class="linenos">104</span>    <span class="c1">#print(f&quot;check {check}\n&quot;)</span>
+<span class="linenos">105</span>    <span class="k">return</span><span class="p">(</span><span class="n">check</span><span class="p">)</span>
+<span class="linenos">106</span>
+<span class="linenos">107</span><span class="n">corner_node</span>  <span class="o">=</span> <span class="n">mesh</span><span class="o">.</span><span class="n">locate_entities_boundary</span><span class="p">(</span><span class="n">my_mesh</span><span class="p">,</span> <span class="n">gdim</span><span class="o">-</span><span class="mi">3</span><span class="p">,</span> <span class="n">True_if_corner</span><span class="p">)</span>
+<span class="linenos">108</span>
+<span class="linenos">109</span><span class="n">dg_corner</span> <span class="o">=</span>  <span class="n">fem</span><span class="o">.</span><span class="n">locate_dofs_geometrical</span><span class="p">(</span><span class="n">V</span><span class="p">,</span> <span class="n">True_if_corner</span><span class="p">)</span> 
+<span class="linenos">110</span>
+<span class="linenos">111</span><span class="n">corner_dof0</span> <span class="o">=</span> <span class="n">fem</span><span class="o">.</span><span class="n">locate_dofs_topological</span><span class="p">(</span><span class="n">V</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">gdim</span><span class="o">-</span><span class="mi">3</span><span class="p">,</span> <span class="n">dg_corner</span><span class="p">)</span>
+<span class="linenos">112</span><span class="n">corner_dof1</span> <span class="o">=</span> <span class="n">fem</span><span class="o">.</span><span class="n">locate_dofs_topological</span><span class="p">(</span><span class="n">V</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span> <span class="n">gdim</span><span class="o">-</span><span class="mi">3</span><span class="p">,</span> <span class="n">dg_corner</span><span class="p">)</span>
+<span class="linenos">113</span><span class="n">corner_dof2</span> <span class="o">=</span> <span class="n">fem</span><span class="o">.</span><span class="n">locate_dofs_topological</span><span class="p">(</span><span class="n">V</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="mi">2</span><span class="p">),</span> <span class="n">gdim</span><span class="o">-</span><span class="mi">3</span><span class="p">,</span> <span class="n">dg_corner</span><span class="p">)</span>
+<span class="linenos">114</span>
+<span class="linenos">115</span><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Dirichlet III&quot;</span><span class="p">)</span>  
+<span class="linenos">116</span><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">corner_node </span><span class="si">{</span><span class="n">corner_node</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="linenos">117</span><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;dg_corner   </span><span class="si">{</span><span class="n">dg_corner</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="linenos">118</span><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;corner_dof0 </span><span class="si">{</span><span class="n">corner_dof0</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="linenos">119</span><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;corner_dof1 </span><span class="si">{</span><span class="n">corner_dof1</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="linenos">120</span><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;corner_dof2 </span><span class="si">{</span><span class="n">corner_dof2</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="linenos">121</span>
+<span class="linenos">122</span><span class="n">u0_corner</span> <span class="o">=</span> <span class="mf">1.0</span><span class="o">*</span><span class="n">L2</span>
+<span class="linenos">123</span><span class="n">u1_corner</span> <span class="o">=</span> <span class="mf">1.0</span><span class="o">*</span><span class="n">L2</span>
+<span class="linenos">124</span><span class="n">u2_corner</span> <span class="o">=</span> <span class="mf">1.0</span><span class="o">*</span><span class="n">L2</span>
+<span class="linenos">125</span>
+<span class="linenos">126</span><span class="n">bc_corner_0</span>      <span class="o">=</span> <span class="n">fem</span><span class="o">.</span><span class="n">dirichletbc</span><span class="p">(</span><span class="n">u0_corner</span><span class="p">,</span><span class="n">corner_dof0</span><span class="p">,</span> <span class="n">V</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span>
+<span class="linenos">127</span><span class="n">bc_corner_1</span>      <span class="o">=</span> <span class="n">fem</span><span class="o">.</span><span class="n">dirichletbc</span><span class="p">(</span><span class="n">u1_corner</span><span class="p">,</span><span class="n">corner_dof1</span><span class="p">,</span> <span class="n">V</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+<span class="linenos">128</span><span class="n">bc_corner_2</span>      <span class="o">=</span> <span class="n">fem</span><span class="o">.</span><span class="n">dirichletbc</span><span class="p">(</span><span class="n">u2_corner</span><span class="p">,</span><span class="n">corner_dof2</span><span class="p">,</span> <span class="n">V</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span>
+<span class="linenos">129</span><span class="c1">#--------------------------------------------------------------------</span>
+<span class="linenos">130</span><span class="c1">#    CONSTITUTIVE LAW</span>
+<span class="linenos">131</span><span class="c1">#--------------------------------------------------------------------</span>
+<span class="linenos">132</span><span class="n">mu</span>      <span class="o">=</span> <span class="mf">1000.</span>
+<span class="linenos">133</span><span class="n">lamda</span>   <span class="o">=</span> <span class="mf">1000.</span>
+<span class="linenos">134</span><span class="n">rho</span>     <span class="o">=</span> <span class="mf">1.0</span>
+<span class="linenos">135</span><span class="n">gravity</span> <span class="o">=</span> <span class="mf">9.0</span> 
+<span class="linenos">136</span>
+<span class="linenos">137</span><span class="k">def</span> <span class="nf">epsilon</span><span class="p">(</span><span class="n">u</span><span class="p">):</span>
+<span class="linenos">138</span>    <span class="k">return</span> <span class="n">ufl</span><span class="o">.</span><span class="n">sym</span><span class="p">(</span><span class="n">ufl</span><span class="o">.</span><span class="n">grad</span><span class="p">(</span><span class="n">u</span><span class="p">))</span>  
+<span class="linenos">139</span>
+<span class="linenos">140</span><span class="k">def</span> <span class="nf">sigma</span><span class="p">(</span><span class="n">u</span><span class="p">):</span>
+<span class="linenos">141</span>    <span class="k">return</span> <span class="n">lamda</span> <span class="o">*</span> <span class="n">ufl</span><span class="o">.</span><span class="n">nabla_div</span><span class="p">(</span><span class="n">u</span><span class="p">)</span> <span class="o">*</span> <span class="n">ufl</span><span class="o">.</span><span class="n">Identity</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">u</span><span class="p">))</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">mu</span> <span class="o">*</span> <span class="n">epsilon</span><span class="p">(</span><span class="n">u</span><span class="p">)</span>
+<span class="linenos">142</span><span class="c1">#--------------------------------------------------------------------</span>
+<span class="linenos">143</span><span class="c1">#   VARIATIONAL PROBLEM</span>
+<span class="linenos">144</span><span class="c1">#--------------------------------------------------------------------</span>
+<span class="linenos">145</span><span class="n">u</span>  <span class="o">=</span> <span class="n">ufl</span><span class="o">.</span><span class="n">TrialFunction</span><span class="p">(</span><span class="n">V</span><span class="p">)</span>
+<span class="linenos">146</span><span class="n">v</span>  <span class="o">=</span> <span class="n">ufl</span><span class="o">.</span><span class="n">TestFunction</span><span class="p">(</span><span class="n">V</span><span class="p">)</span>
+<span class="linenos">147</span><span class="n">ff</span> <span class="o">=</span> <span class="n">fem</span><span class="o">.</span><span class="n">Constant</span><span class="p">(</span><span class="n">my_mesh</span><span class="p">,</span> <span class="n">default_scalar_type</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="n">rho</span><span class="o">*</span><span class="n">gravity</span><span class="p">)))</span>
+<span class="linenos">148</span><span class="n">a</span>  <span class="o">=</span> <span class="n">ufl</span><span class="o">.</span><span class="n">inner</span><span class="p">(</span><span class="n">sigma</span><span class="p">(</span><span class="n">u</span><span class="p">),</span> <span class="n">epsilon</span><span class="p">(</span><span class="n">v</span><span class="p">))</span> <span class="o">*</span> <span class="n">ufl</span><span class="o">.</span><span class="n">dx</span>
+<span class="linenos">149</span><span class="n">L</span>  <span class="o">=</span> <span class="n">ufl</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">ff</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span> <span class="o">*</span> <span class="n">ufl</span><span class="o">.</span><span class="n">dx</span> 
+<span class="linenos">150</span>
+<span class="linenos">151</span><span class="n">petsc_opts</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;ksp_type&quot;</span><span class="p">:</span> <span class="s2">&quot;preonly&quot;</span><span class="p">,</span> <span class="s2">&quot;pc_type&quot;</span><span class="p">:</span> <span class="s2">&quot;lu&quot;</span><span class="p">}</span>
+<span class="linenos">152</span>
+<span class="linenos">153</span><span class="n">bcs</span> <span class="o">=</span> <span class="p">[</span><span class="n">bcI</span> <span class="p">,</span> <span class="n">bc_edge</span><span class="p">,</span> <span class="n">bc_corner_0</span><span class="p">,</span> <span class="n">bc_corner_1</span><span class="p">,</span>  <span class="n">bc_corner_2</span><span class="p">]</span>
+<span class="linenos">154</span><span class="n">problem</span> <span class="o">=</span> <span class="n">fem</span><span class="o">.</span><span class="n">petsc</span><span class="o">.</span><span class="n">LinearProblem</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">L</span><span class="p">,</span> <span class="n">bcs</span><span class="o">=</span><span class="n">bcs</span><span class="p">,</span> <span class="n">petsc_options</span><span class="o">=</span><span class="n">petsc_opts</span><span class="p">)</span>
+<span class="linenos">155</span><span class="n">uh</span> <span class="o">=</span> <span class="n">problem</span><span class="o">.</span><span class="n">solve</span><span class="p">()</span>
+<span class="linenos">156</span><span class="n">uh</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;Displacement&quot;</span>
+<span class="linenos">157</span><span class="c1">#--------------------------------------------------------------------</span>
+<span class="linenos">158</span><span class="c1">#   OUTPUT FOR PARAVIEW</span>
+<span class="linenos">159</span><span class="c1">#--------------------------------------------------------------------</span>
+<span class="linenos">160</span><span class="n">xdmffile</span> <span class="o">=</span> <span class="n">dolfinx</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">XDMFFile</span><span class="p">(</span><span class="n">MPI</span><span class="o">.</span><span class="n">COMM_WORLD</span><span class="p">,</span> <span class="s2">&quot;Results.xdmf&quot;</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span>
+<span class="linenos">161</span>
+<span class="linenos">162</span><span class="n">xdmffile</span><span class="o">.</span><span class="n">write_mesh</span><span class="p">(</span><span class="n">my_mesh</span><span class="p">)</span>
+<span class="linenos">163</span><span class="n">xdmffile</span><span class="o">.</span><span class="n">write_function</span><span class="p">(</span><span class="n">uh</span><span class="p">)</span>
+<span class="linenos">164</span><span class="n">xdmffile</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+<span class="linenos">165</span>
+</pre></div>
+</div>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+        </div>
+        <div class="sidebar">
+          
+          <h3>Table of Contents</h3>
+          <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../Intro/intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../LinearElastostatics/LinearElastostatics.html">Linear Elastostatics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../LinearElastodynamics/LinearElastodynamics.html">Linear Elastodynamics</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="GeneralAspects.html">General aspects</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="DirichletBCs.html">Dirichlet boundary conditions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ComplexEigenproblems.html">Complex Eigenvalue Problems</a></li>
+</ul>
+</li>
+</ul>
+
+          <search role="search">
+            <h3 style="margin-top: 1.5em;">Search</h3>
+            <form class="search" action="../search.html" method="get">
+                <input type="text" name="q" />
+                <input type="submit" value="Go" />
+            </form>
+          </search>
+
+        </div>
+        <div class="clearer"></div>
+      </div>
+    </div>
+
+    <div class="footer-wrapper">
+      <div class="footer">
+        <div class="left">
+          <div role="navigation" aria-label="Related">
+            <a href="meshesIntro.html" title="General aspects"
+              >previous</a> |
+            <a href="ComplexEigenproblems.html" title="Complex Eigenvalue Problems"
+              >next</a> |
+            <a href="../genindex.html" title="General Index"
+              >index</a>
+          </div>
+          <div role="note" aria-label="source link">
+              <br/>
+              <a href="../_sources/GeneralAspects/dirichletBCsExample.rst.txt"
+                rel="nofollow">Show Source</a>
+          </div>
+        </div>
+
+        <div class="right">
+          
+    <div class="footer" role="contentinfo">
+    &#169; Copyright 2024, Uwe Muhlich.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.2.3.
+    </div>
+        </div>
+        <div class="clearer"></div>
+      </div>
+    </div>
+
+  </body>
+</html>

@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Example Using SciPy and SLEPc for a Real Eigenvalue Problem &#8212; FEniCSx - Documented Examples UACh</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=a746c00c" />
+    <link rel="stylesheet" type="text/css" href="../_static/agogo.css?v=08520df9" />
+    <script src="../_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Example using SLEPc for a complex eigenvalue problem" href="exampleSLEPcComplex.html" />
+    <link rel="prev" title="Complex Eigenvalue Problems" href="ComplexEigenproblems.html" /> 
+  </head><body>
+    <div class="header-wrapper" role="banner">
+      <div class="header">
+        <div class="headertitle"><a
+          href="../index.html">FEniCSx - Documented Examples UACh</a></div>
+        <div class="rel" role="navigation" aria-label="Related">
+          <a href="ComplexEigenproblems.html" title="Complex Eigenvalue Problems"
+             accesskey="P">previous</a> |
+          <a href="exampleSLEPcComplex.html" title="Example using SLEPc for a complex eigenvalue problem"
+             accesskey="N">next</a> |
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a>
+        </div>
+       </div>
+    </div>
+
+    <div class="content-wrapper">
+      <div class="content">
+        <div class="document">
+            
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="example-using-scipy-and-slepc-for-a-real-eigenvalue-problem">
+<span id="target-modalga"></span><h1>Example Using SciPy and SLEPc  for a Real Eigenvalue Problem<a class="headerlink" href="#example-using-scipy-and-slepc-for-a-real-eigenvalue-problem" title="Link to this heading">¶</a></h1>
+<section id="problem">
+<h2>Problem<a class="headerlink" href="#problem" title="Link to this heading">¶</a></h2>
+<p>We analyze a beam-like structure clamped at one end, assuming a linear elastic material.
+This example demonstrates the use of the SciPy sparse solver as an alternative to,
+or in conjunction with, SLEPc.</p>
+<figure class="align-default" id="id1">
+<a class="reference internal image-reference" href="../_images/sc.png"><img alt="../_images/sc.png" src="../_images/sc.png" style="width: 718.0px; height: 369.5px;" />
+</a>
+<figcaption>
+<p><span class="caption-text">Fourth eigenmode  of the beam-like structure clamped at one end (Paraview).
+The color corresponds to the magnitude of the displacement vector</span><a class="headerlink" href="#id1" title="Link to this image">¶</a></p>
+</figcaption>
+</figure>
+</section>
+<section id="details-of-the-python-script">
+<h2>Details of the Python Script<a class="headerlink" href="#details-of-the-python-script" title="Link to this heading">¶</a></h2>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>You can download the complete python script
+<a class="reference download internal" download="" href="../_downloads/7c67cdf701622dfe2105aacab5bedf05/TestModal.py"><code class="xref download docutils literal notranslate"><span class="pre">TestModal.py</span></code></a></p>
+</div>
+<p><strong>Import required libraries</strong></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">ufl</span>
+<span class="kn">import</span> <span class="nn">sys</span><span class="o">,</span> <span class="nn">slepc4py</span>
+
+<span class="n">slepc4py</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">)</span>
+
+<span class="kn">from</span> <span class="nn">dolfinx</span>           <span class="kn">import</span> <span class="n">fem</span><span class="p">,</span> <span class="n">mesh</span><span class="p">,</span> <span class="n">io</span><span class="p">,</span> <span class="n">default_scalar_type</span>
+<span class="kn">from</span> <span class="nn">dolfinx.fem.petsc</span> <span class="kn">import</span> <span class="n">assemble_matrix</span>
+
+<span class="kn">from</span> <span class="nn">mpi4py</span>     <span class="kn">import</span> <span class="n">MPI</span>
+<span class="kn">from</span> <span class="nn">petsc4py</span>   <span class="kn">import</span> <span class="n">PETSc</span>
+<span class="kn">from</span> <span class="nn">slepc4py</span>   <span class="kn">import</span> <span class="n">SLEPc</span>
+
+<span class="kn">from</span> <span class="nn">scipy.sparse</span> <span class="kn">import</span> <span class="n">csr_matrix</span>
+<span class="kn">from</span> <span class="nn">scipy.sparse</span> <span class="kn">import</span> <span class="n">linalg</span>
+</pre></div>
+</div>
+<p>This section imports the necessary libraries:</p>
+<ul class="simple">
+<li><p>dolfinx: For finite element computation.</p></li>
+<li><p>petsc4py and slepc4py: Interfaces for PETSc and SLEPc libraries for solving eigenvalue problems.</p></li>
+<li><p>scipy.sparse: For sparse matrix operations and solving eigenvalue problems with SciPy.</p></li>
+</ul>
+<p><strong>Define PETSc to SciPy Conversion Function</strong></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1">#--------------------------------------------------------------------</span>
+<span class="c1"># FUNCTION FOR CONVERTING PETSc TO SciPy FORMAT</span>
+<span class="c1">#--------------------------------------------------------------------</span>
+<span class="k">def</span> <span class="nf">PETSc2ScipySparse</span><span class="p">(</span><span class="n">PETScMatrix</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot; converts a PETSc matrix to a SciPy sparse matrix &quot;&quot;&quot;</span> 
+  
+    <span class="n">rows</span><span class="p">,</span> <span class="n">cols</span>        <span class="o">=</span> <span class="n">PETScMatrix</span><span class="o">.</span><span class="n">getSize</span><span class="p">()</span>                        <span class="c1"># Get matrix dimensions</span>
+    <span class="n">ai</span><span class="p">,</span> <span class="n">aj</span><span class="p">,</span> <span class="n">av</span>        <span class="o">=</span> <span class="n">PETScMatrix</span><span class="o">.</span><span class="n">getValuesCSR</span><span class="p">()</span>                   <span class="c1"># Extract CSR data from PETSc matrix</span>
+    <span class="n">ScipySparseMatrix</span> <span class="o">=</span> <span class="n">csr_matrix</span><span class="p">((</span><span class="n">av</span><span class="p">,</span> <span class="n">aj</span><span class="p">,</span> <span class="n">ai</span><span class="p">),</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="n">rows</span><span class="p">,</span> <span class="n">cols</span><span class="p">))</span> <span class="c1"># Create SciPy CSR matrix</span>
+    <span class="k">return</span><span class="p">(</span><span class="n">ScipySparseMatrix</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>This function takes a PETSc sparse matrix and converts it to the SciPy csr_matrix format. This conversion is essential for compatibility when using SciPy’s eigenvalue solvers.</p>
+<p><strong>Define the Computational Domain and Mesh</strong></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1">#--------------------------------------------------------------------</span>
+<span class="c1"># DOMAIN AND MESH</span>
+<span class="c1">#--------------------------------------------------------------------    </span>
+<span class="n">L</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">5</span><span class="p">,</span> <span class="mf">0.6</span><span class="p">,</span> <span class="mf">0.4</span><span class="p">])</span>
+<span class="n">N</span> <span class="o">=</span> <span class="p">[</span><span class="mi">25</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span>
+<span class="n">my_mesh</span> <span class="o">=</span> <span class="n">mesh</span><span class="o">.</span><span class="n">create_box</span><span class="p">(</span><span class="n">MPI</span><span class="o">.</span><span class="n">COMM_WORLD</span><span class="p">,</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">]),</span> <span class="n">L</span><span class="p">],</span> <span class="n">N</span><span class="p">,</span>
+                          <span class="n">mesh</span><span class="o">.</span><span class="n">CellType</span><span class="o">.</span><span class="n">hexahedron</span><span class="p">)</span>        
+</pre></div>
+</div>
+<p>This block defines a 3D rectangular domain with dimensions [5, 0.6, 0.4] and a resolution of [25, 3, 2]. The mesh is created using Dolfinx and distributed across processors.</p>
+<p><strong>Define Material Properties and Constitutive Laws</strong></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1">#--------------------------------------------------------------------</span>
+<span class="c1"># CONSTITUTIVE LAW (LINEAR ELASTICITY)</span>
+<span class="c1">#--------------------------------------------------------------------</span>
+<span class="n">E</span><span class="p">,</span> <span class="n">nu</span>   <span class="o">=</span> <span class="p">(</span><span class="mf">2e11</span><span class="p">),</span> <span class="p">(</span><span class="mf">0.3</span><span class="p">)</span>  
+<span class="n">rho</span>     <span class="o">=</span> <span class="p">(</span><span class="mi">7850</span><span class="p">)</span> 
+<span class="n">mu</span>      <span class="o">=</span> <span class="n">fem</span><span class="o">.</span><span class="n">Constant</span><span class="p">(</span><span class="n">my_mesh</span><span class="p">,</span> <span class="n">E</span><span class="o">/</span><span class="mf">2.</span><span class="o">/</span><span class="p">(</span><span class="mi">1</span><span class="o">+</span><span class="n">nu</span><span class="p">))</span>
+<span class="n">lamda</span>   <span class="o">=</span> <span class="n">fem</span><span class="o">.</span><span class="n">Constant</span><span class="p">(</span><span class="n">my_mesh</span><span class="p">,</span> <span class="n">E</span><span class="o">*</span><span class="n">nu</span><span class="o">/</span><span class="p">(</span><span class="mi">1</span><span class="o">+</span><span class="n">nu</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="mi">2</span><span class="o">*</span><span class="n">nu</span><span class="p">))</span>
+
+<span class="k">def</span> <span class="nf">epsilon</span><span class="p">(</span><span class="n">u</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">ufl</span><span class="o">.</span><span class="n">sym</span><span class="p">(</span><span class="n">ufl</span><span class="o">.</span><span class="n">grad</span><span class="p">(</span><span class="n">u</span><span class="p">))</span>
+<span class="k">def</span> <span class="nf">sigma</span><span class="p">(</span><span class="n">u</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">lamda</span><span class="o">*</span><span class="n">ufl</span><span class="o">.</span><span class="n">nabla_div</span><span class="p">(</span><span class="n">u</span><span class="p">)</span><span class="o">*</span><span class="n">ufl</span><span class="o">.</span><span class="n">Identity</span><span class="p">(</span><span class="n">my_mesh</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">dim</span><span class="p">)</span> <span class="o">+</span> <span class="mi">2</span><span class="o">*</span><span class="n">mu</span><span class="o">*</span><span class="n">epsilon</span><span class="p">(</span><span class="n">u</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Defines material properties (Young’s modulus E, Poisson’s ratio nu, density rho) and constitutive relationships for
+linear elasticity:</p>
+<ul class="simple">
+<li><p>epsilon(u): Symmetric gradient (strain tensor).</p></li>
+<li><p>sigma(u): Stress tensor using the Lamé constants.</p></li>
+</ul>
+<p><strong>Define Function Space and Boundary Conditions</strong></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1">#--------------------------------------------------------------------</span>
+<span class="c1"># FUNCTION SPACE, TRIAL AND TEST FUNCTION</span>
+<span class="c1">#--------------------------------------------------------------------</span>
+<span class="n">V</span> <span class="o">=</span> <span class="n">fem</span><span class="o">.</span><span class="n">functionspace</span><span class="p">(</span><span class="n">my_mesh</span><span class="p">,</span> <span class="p">(</span><span class="s2">&quot;CG&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">,(</span><span class="n">my_mesh</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">dim</span><span class="p">,</span> <span class="p">)))</span>
+<span class="n">u</span> <span class="o">=</span> <span class="n">ufl</span><span class="o">.</span><span class="n">TrialFunction</span><span class="p">(</span><span class="n">V</span><span class="p">)</span>
+<span class="n">v</span> <span class="o">=</span> <span class="n">ufl</span><span class="o">.</span><span class="n">TestFunction</span><span class="p">(</span><span class="n">V</span><span class="p">)</span>
+<span class="c1">#--------------------------------------------------------------------</span>
+<span class="c1"># DIRICHLET BOUNDARY CONDITIONS</span>
+<span class="c1">#--------------------------------------------------------------------</span>
+<span class="k">def</span> <span class="nf">clamped_boundary</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="mi">0</span><span class="p">)</span>
+
+<span class="n">u_zero</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">((</span><span class="mi">0</span><span class="p">,)</span> <span class="o">*</span> <span class="n">my_mesh</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">dim</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">default_scalar_type</span><span class="p">)</span>
+
+<span class="n">bc</span> <span class="o">=</span> <span class="n">fem</span><span class="o">.</span><span class="n">dirichletbc</span><span class="p">(</span><span class="n">u_zero</span><span class="p">,</span> <span class="n">fem</span><span class="o">.</span><span class="n">locate_dofs_geometrical</span><span class="p">(</span><span class="n">V</span><span class="p">,</span> <span class="n">clamped_boundary</span><span class="p">),</span> <span class="n">V</span><span class="p">)</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>Creates a finite element function space for vector-valued functions.</p></li>
+<li><p>Implements Dirichlet boundary conditions (fixed at x=0).</p></li>
+</ul>
+<p><strong>Assemble Stiffness and Mass Matrices</strong></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1">#--------------------------------------------------------------------</span>
+<span class="c1"># VARIATIONAL FORM, STIFFNESS AND MASS MATRIX</span>
+<span class="c1">#--------------------------------------------------------------------</span>
+<span class="n">k_form</span> <span class="o">=</span> <span class="n">ufl</span><span class="o">.</span><span class="n">inner</span><span class="p">(</span><span class="n">sigma</span><span class="p">(</span><span class="n">u</span><span class="p">),</span><span class="n">epsilon</span><span class="p">(</span><span class="n">v</span><span class="p">))</span><span class="o">*</span><span class="n">ufl</span><span class="o">.</span><span class="n">dx</span>
+<span class="n">m_form</span> <span class="o">=</span> <span class="n">rho</span><span class="o">*</span><span class="n">ufl</span><span class="o">.</span><span class="n">inner</span><span class="p">(</span><span class="n">u</span><span class="p">,</span><span class="n">v</span><span class="p">)</span><span class="o">*</span><span class="n">ufl</span><span class="o">.</span><span class="n">dx</span>
+<span class="c1">#</span>
+<span class="c1"># Using the &quot;diagonal&quot; kwarg ensures that Dirichlet BC modes will not be among</span>
+<span class="c1"># the lowest-frequency modes of the beam. </span>
+<span class="n">K</span> <span class="o">=</span> <span class="n">fem</span><span class="o">.</span><span class="n">petsc</span><span class="o">.</span><span class="n">assemble_matrix</span><span class="p">(</span><span class="n">fem</span><span class="o">.</span><span class="n">form</span><span class="p">(</span><span class="n">k_form</span><span class="p">),</span> <span class="n">bcs</span><span class="o">=</span><span class="p">[</span><span class="n">bc</span><span class="p">],</span> <span class="n">diagonal</span><span class="o">=</span><span class="mi">62831</span><span class="p">)</span>
+<span class="n">M</span> <span class="o">=</span> <span class="n">fem</span><span class="o">.</span><span class="n">petsc</span><span class="o">.</span><span class="n">assemble_matrix</span><span class="p">(</span><span class="n">fem</span><span class="o">.</span><span class="n">form</span><span class="p">(</span><span class="n">m_form</span><span class="p">),</span> <span class="n">bcs</span><span class="o">=</span><span class="p">[</span><span class="n">bc</span><span class="p">],</span> <span class="n">diagonal</span><span class="o">=</span><span class="mf">1.</span><span class="o">/</span><span class="mi">62831</span><span class="p">)</span>
+<span class="n">K</span><span class="o">.</span><span class="n">assemble</span><span class="p">()</span>
+<span class="n">M</span><span class="o">.</span><span class="n">assemble</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>Constructs stiffness (K) and mass (M) matrices  from variational forms.</p>
+<p><strong>Solve Eigenvalue Problem with SciPy</strong></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1">#--------------------------------------------------------------------</span>
+<span class="c1"># SciPy EIGENSOLVER </span>
+<span class="c1">#--------------------------------------------------------------------</span>
+<span class="n">KS</span> <span class="o">=</span> <span class="n">PETSc2ScipySparse</span><span class="p">(</span><span class="n">K</span><span class="p">)</span>
+<span class="n">MS</span> <span class="o">=</span> <span class="n">PETSc2ScipySparse</span><span class="p">(</span><span class="n">M</span><span class="p">)</span>
+
+<span class="n">num_eigenvs</span> <span class="o">=</span> <span class="mi">16</span>
+<span class="n">eigenvals</span><span class="p">,</span> <span class="n">eigenvs</span> <span class="o">=</span> <span class="n">linalg</span><span class="o">.</span><span class="n">eigsh</span><span class="p">(</span><span class="n">KS</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="n">num_eigenvs</span><span class="p">,</span> <span class="n">M</span><span class="o">=</span><span class="n">MS</span><span class="p">,</span> <span class="n">which</span><span class="o">=</span><span class="s1">&#39;SM&#39;</span><span class="p">)</span>
+<span class="n">SciPyFreqs</span>         <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">eigenvals</span><span class="o">.</span><span class="n">real</span><span class="p">)</span><span class="o">/</span><span class="mi">2</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span>
+</pre></div>
+</div>
+<p>Converts the PETSc matrices to SciPy format and solves the generalized eigenvalue problem using the SciPy eigsh solver. The eigenvalues are converted to natural frequencies.</p>
+<p><strong>Solve Eigenvalue Problem with SLEPc</strong></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1">#--------------------------------------------------------------------</span>
+<span class="c1"># SLEPc EIGENSOLVER </span>
+<span class="c1">#--------------------------------------------------------------------</span>
+<span class="c1">#</span>
+<span class="c1"># Create and configure eigenvalue solver</span>
+<span class="c1">#</span>
+<span class="n">N_eig</span> <span class="o">=</span> <span class="mi">16</span>
+<span class="n">eigensolver</span> <span class="o">=</span> <span class="n">SLEPc</span><span class="o">.</span><span class="n">EPS</span><span class="p">()</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">MPI</span><span class="o">.</span><span class="n">COMM_WORLD</span><span class="p">)</span>
+
+<span class="n">eigensolver</span><span class="o">.</span><span class="n">setDimensions</span><span class="p">(</span><span class="n">N_eig</span><span class="p">)</span>
+<span class="n">eigensolver</span><span class="o">.</span><span class="n">setProblemType</span><span class="p">(</span><span class="n">SLEPc</span><span class="o">.</span><span class="n">EPS</span><span class="o">.</span><span class="n">ProblemType</span><span class="o">.</span><span class="n">GHEP</span><span class="p">)</span>
+
+<span class="n">st</span> <span class="o">=</span> <span class="n">SLEPc</span><span class="o">.</span><span class="n">ST</span><span class="p">()</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">MPI</span><span class="o">.</span><span class="n">COMM_WORLD</span><span class="p">)</span>
+<span class="n">st</span><span class="o">.</span><span class="n">setType</span><span class="p">(</span><span class="n">SLEPc</span><span class="o">.</span><span class="n">ST</span><span class="o">.</span><span class="n">Type</span><span class="o">.</span><span class="n">SINVERT</span><span class="p">)</span>
+<span class="n">st</span><span class="o">.</span><span class="n">setShift</span><span class="p">(</span><span class="mf">0.1</span><span class="p">)</span>
+<span class="n">st</span><span class="o">.</span><span class="n">setFromOptions</span><span class="p">()</span>
+<span class="n">eigensolver</span><span class="o">.</span><span class="n">setST</span><span class="p">(</span><span class="n">st</span><span class="p">)</span>
+<span class="n">eigensolver</span><span class="o">.</span><span class="n">setOperators</span><span class="p">(</span><span class="n">K</span><span class="p">,</span> <span class="n">M</span><span class="p">)</span>
+<span class="n">eigensolver</span><span class="o">.</span><span class="n">setFromOptions</span><span class="p">()</span>
+<span class="c1">#</span>
+<span class="c1"># Compute eigenvalue-eigenvector pairs</span>
+<span class="c1">#</span>
+<span class="n">eigensolver</span><span class="o">.</span><span class="n">solve</span><span class="p">()</span>
+
+<span class="n">evs</span>           <span class="o">=</span> <span class="n">eigensolver</span><span class="o">.</span><span class="n">getConverged</span><span class="p">()</span>
+<span class="n">vr</span><span class="p">,</span> <span class="n">vi</span>        <span class="o">=</span> <span class="n">K</span><span class="o">.</span><span class="n">getVecs</span><span class="p">()</span>
+<span class="c1">#--------------------------------------------------------------------</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>Configures and solves the eigenvalue problem using SLEPc.</p></li>
+<li><p>Applies spectral transformation (SINVERT) for improved convergence.</p></li>
+</ul>
+<p><strong>Output Results and Compare</strong></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># OUTPUT TO FILE AND COMPARISON</span>
+<span class="c1">#--------------------------------------------------------------------</span>
+<span class="n">u_output</span>      <span class="o">=</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span><span class="p">(</span><span class="n">V</span><span class="p">)</span>
+<span class="n">u_output</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;Eigenvector&quot;</span>
+
+<span class="nb">print</span><span class="p">(</span> <span class="s2">&quot;Number of converged eigenpairs </span><span class="si">%d</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">evs</span> <span class="p">)</span>
+<span class="k">if</span> <span class="n">evs</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+    <span class="k">with</span> <span class="n">io</span><span class="o">.</span><span class="n">XDMFFile</span><span class="p">(</span><span class="n">MPI</span><span class="o">.</span><span class="n">COMM_WORLD</span><span class="p">,</span> <span class="s2">&quot;eigenvectors.xdmf&quot;</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">xdmf</span><span class="p">:</span>
+        <span class="n">xdmf</span><span class="o">.</span><span class="n">write_mesh</span><span class="p">(</span><span class="n">my_mesh</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span> <span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="n">N_eig</span><span class="p">,</span> <span class="n">evs</span><span class="p">)):</span>
+            <span class="n">l</span> <span class="o">=</span> <span class="n">eigensolver</span><span class="o">.</span><span class="n">getEigenpair</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">vr</span><span class="p">,</span> <span class="n">vi</span><span class="p">)</span>
+            <span class="n">freq</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">l</span><span class="o">.</span><span class="n">real</span><span class="p">)</span><span class="o">/</span><span class="mi">2</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Mode </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">freq</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> Hz  </span><span class="si">{</span><span class="n">SciPyFreqs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> Hz&quot;</span><span class="p">)</span>
+            <span class="n">u_output</span><span class="o">.</span><span class="n">x</span><span class="o">.</span><span class="n">array</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">vr</span>
+            <span class="n">xdmf</span><span class="o">.</span><span class="n">write_function</span><span class="p">(</span><span class="n">u_output</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span>
+                   
+            
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>Writes eigenvectors to an XDMF file for visualization.</p></li>
+<li><p>Compares the frequencies computed by SciPy and SLEPc. The results are printed for each mode.</p></li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>In case of an error  message try first <strong>source dolfinx-real-mode</strong> in your
+Docker environment.</p>
+</div>
+</section>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+        </div>
+        <div class="sidebar">
+          
+          <h3>Table of Contents</h3>
+          <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../Intro/intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../LinearElastostatics/LinearElastostatics.html">Linear Elastostatics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../LinearElastodynamics/LinearElastodynamics.html">Linear Elastodynamics</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="GeneralAspects.html">General aspects</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="DirichletBCs.html">Dirichlet boundary conditions</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="ComplexEigenproblems.html">Complex Eigenvalue Problems</a></li>
+</ul>
+</li>
+</ul>
+
+          <search role="search">
+            <h3 style="margin-top: 1.5em;">Search</h3>
+            <form class="search" action="../search.html" method="get">
+                <input type="text" name="q" />
+                <input type="submit" value="Go" />
+            </form>
+          </search>
+
+        </div>
+        <div class="clearer"></div>
+      </div>
+    </div>
+
+    <div class="footer-wrapper">
+      <div class="footer">
+        <div class="left">
+          <div role="navigation" aria-label="Related">
+            <a href="ComplexEigenproblems.html" title="Complex Eigenvalue Problems"
+              >previous</a> |
+            <a href="exampleSLEPcComplex.html" title="Example using SLEPc for a complex eigenvalue problem"
+              >next</a> |
+            <a href="../genindex.html" title="General Index"
+              >index</a>
+          </div>
+          <div role="note" aria-label="source link">
+              <br/>
+              <a href="../_sources/GeneralAspects/exampleSciPyReal.rst.txt"
+                rel="nofollow">Show Source</a>
+          </div>
+        </div>
+
+        <div class="right">
+          
+    <div class="footer" role="contentinfo">
+    &#169; Copyright 2024, Uwe Muhlich.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.2.3.
+    </div>
+        </div>
+        <div class="clearer"></div>
+      </div>
+    </div>
+
+  </body>
+</html>

@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Example using SLEPc for a complex eigenvalue problem &#8212; FEniCSx - Documented Examples UACh</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=a746c00c" />
+    <link rel="stylesheet" type="text/css" href="../_static/agogo.css?v=08520df9" />
+    <script src="../_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="prev" title="Example Using SciPy and SLEPc for a Real Eigenvalue Problem" href="exampleSciPyReal.html" /> 
+  </head><body>
+    <div class="header-wrapper" role="banner">
+      <div class="header">
+        <div class="headertitle"><a
+          href="../index.html">FEniCSx - Documented Examples UACh</a></div>
+        <div class="rel" role="navigation" aria-label="Related">
+          <a href="exampleSciPyReal.html" title="Example Using SciPy and SLEPc for a Real Eigenvalue Problem"
+             accesskey="P">previous</a> |
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a>
+        </div>
+       </div>
+    </div>
+
+    <div class="content-wrapper">
+      <div class="content">
+        <div class="document">
+            
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="example-using-slepc-for-a-complex-eigenvalue-problem">
+<h1>Example using SLEPc  for a complex eigenvalue problem<a class="headerlink" href="#example-using-slepc-for-a-complex-eigenvalue-problem" title="Link to this heading">¶</a></h1>
+<p>We consider a beam-like structure clamped at one end, assuming a linear elastic
+material. For illustration purpose, we try to solve the problem</p>
+<div class="math notranslate nohighlight">
+\[\begin{eqnarray}
+  \left[K + \alpha \mathrm{I} B \right] \mathbf{x} = \omega^2 M \mathbf{x}
+\end{eqnarray}\]</div>
+<p>with  <span class="math notranslate nohighlight">\(B=K\)</span>, where <span class="math notranslate nohighlight">\(\mathrm{I}\)</span> is the imaginary unit.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>You can download the complete python script
+<a class="reference download internal" download="" href="../_downloads/ed567a76760902cef0fe425aeeb04f75/TestModalComplex.py"><code class="xref download docutils literal notranslate"><span class="pre">TestModalComplex.py</span></code></a></p>
+</div>
+<p><strong>Imports and Environment Check</strong></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">ufl</span>
+<span class="kn">from</span> <span class="nn">dolfinx</span> <span class="kn">import</span> <span class="n">fem</span><span class="p">,</span> <span class="n">mesh</span><span class="p">,</span> <span class="n">default_scalar_type</span>
+<span class="kn">from</span> <span class="nn">dolfinx.fem.petsc</span> <span class="kn">import</span> <span class="n">assemble_matrix</span>
+<span class="kn">from</span> <span class="nn">mpi4py</span> <span class="kn">import</span> <span class="n">MPI</span>
+<span class="kn">from</span> <span class="nn">petsc4py</span> <span class="kn">import</span> <span class="n">PETSc</span>
+<span class="kn">from</span> <span class="nn">slepc4py</span> <span class="kn">import</span> <span class="n">SLEPc</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;================START===================&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">PETSc</span><span class="o">.</span><span class="n">ScalarType</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;If not &lt;class &#39;numpy.complex128&#39;&gt; run:&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;source dolfinx-complex-mode&quot;</span><span class="p">)</span> 
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;in your Docker environment&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;========================================&quot;</span><span class="p">)</span>
+<span class="c1">#--------------------------------------------------------------------</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>Imports essential libraries for mesh creation, variational formulation, and eigenvalue solving.</p></li>
+<li><p>Ensures complex arithmetic (numpy.complex128) is enmathrm{I}abled, as required for this problem.</p></li>
+</ul>
+<p><strong>Function to Create Complex Stiffness Matrix</strong></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># FUNCTION TO CREATE COMPLEX MATRIX A = K+j*B (j imag. unit)</span>
+<span class="c1">#--------------------------------------------------------------------    </span>
+<span class="k">def</span> <span class="nf">create_complex_stiffness</span><span class="p">(</span><span class="n">K</span><span class="p">,</span><span class="n">B</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Create a complex stiffness matrix A = K + j*B.&quot;&quot;&quot;</span>
+    <span class="c1"># Ensure K and B are fully assembled</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">K</span><span class="o">.</span><span class="n">assembled</span><span class="p">:</span>
+        <span class="n">K</span><span class="o">.</span><span class="n">assemble</span><span class="p">()</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">B</span><span class="o">.</span><span class="n">assembled</span><span class="p">:</span>
+        <span class="n">B</span><span class="o">.</span><span class="n">assemble</span><span class="p">()</span>
+    <span class="c1"># Check if  K and B are of same size</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">K</span><span class="o">.</span><span class="n">getSize</span><span class="p">()</span><span class="o">==</span> <span class="n">B</span><span class="o">.</span><span class="n">getSize</span><span class="p">():</span> 
+       <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Error in create_complex_stiffness: K and B must be of same size&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Create a new PETSc matrix for the complex stiffness</span>
+    <span class="n">A</span> <span class="o">=</span> <span class="n">PETSc</span><span class="o">.</span><span class="n">Mat</span><span class="p">()</span><span class="o">.</span><span class="n">createAIJ</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="n">K</span><span class="o">.</span><span class="n">getSize</span><span class="p">(),</span> <span class="n">comm</span><span class="o">=</span><span class="n">MPI</span><span class="o">.</span><span class="n">COMM_WORLD</span><span class="p">)</span>
+    <span class="n">A</span><span class="o">.</span><span class="n">setUp</span><span class="p">()</span>
+
+    <span class="c1"># Get the CSR representation of K</span>
+    <span class="n">rows</span><span class="p">,</span> <span class="n">cols</span> <span class="o">=</span> <span class="n">K</span><span class="o">.</span><span class="n">getSize</span><span class="p">()</span>
+    <span class="n">ai</span><span class="p">,</span> <span class="n">aj</span><span class="p">,</span> <span class="n">av</span> <span class="o">=</span> <span class="n">K</span><span class="o">.</span><span class="n">getValuesCSR</span><span class="p">()</span>
+    <span class="n">bi</span><span class="p">,</span> <span class="n">bj</span><span class="p">,</span> <span class="n">bv</span> <span class="o">=</span> <span class="n">K</span><span class="o">.</span><span class="n">getValuesCSR</span><span class="p">()</span>
+
+    <span class="c1"># Create a complex array for the new values</span>
+    <span class="n">complex_values</span> <span class="o">=</span> <span class="n">av</span> <span class="o">+</span> <span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">bv</span>
+
+    <span class="c1"># Assemble A with the complex values</span>
+    <span class="n">A</span><span class="o">.</span><span class="n">setValuesCSR</span><span class="p">(</span><span class="n">ai</span><span class="p">,</span> <span class="n">aj</span><span class="p">,</span> <span class="n">complex_values</span><span class="p">)</span>
+    <span class="n">A</span><span class="o">.</span><span class="n">assemble</span><span class="p">()</span>
+    
+    <span class="k">return</span> <span class="n">A</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>Avoids MatCopy Issue: Instead of copying K and modifying it, create_complex_stiffness directly
+constructs the matrix using setValuesCSR, ensuring compatibility with PETSc’s complex arithmetic.</p></li>
+<li><p>Checks Matrix Dimensions: Ensures K and B are compatible.</p></li>
+</ul>
+<p><strong>Domain and Mesh Definition</strong></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1">#--------------------------------------------------------------------</span>
+<span class="c1"># DOMAIN AND MESH</span>
+<span class="c1">#--------------------------------------------------------------------    </span>
+<span class="n">L</span> <span class="o">=</span> <span class="p">[</span><span class="mf">5.0</span><span class="p">,</span> <span class="mf">0.6</span><span class="p">,</span> <span class="mf">0.4</span><span class="p">]</span>
+<span class="n">N</span> <span class="o">=</span> <span class="p">[</span><span class="mi">25</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span>
+<span class="n">beam_mesh</span> <span class="o">=</span> <span class="n">mesh</span><span class="o">.</span><span class="n">create_box</span><span class="p">(</span><span class="n">MPI</span><span class="o">.</span><span class="n">COMM_WORLD</span><span class="p">,</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">3</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">L</span><span class="p">)],</span> 
+                            <span class="n">N</span><span class="p">,</span> <span class="n">mesh</span><span class="o">.</span><span class="n">CellType</span><span class="o">.</span><span class="n">hexahedron</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Defines a 3D hexahedral mesh for a beam-like domain.</p>
+<p><strong>Constitutive Law</strong></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1">#--------------------------------------------------------------------</span>
+<span class="c1"># CONSTITUTIVE LAW (LINEAR ELASTICITY)</span>
+<span class="c1">#--------------------------------------------------------------------</span>
+<span class="n">E</span><span class="p">,</span> <span class="n">nu</span><span class="p">,</span> <span class="n">rho</span> <span class="o">=</span> <span class="mf">2e11</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">,</span> <span class="mi">7850</span>
+<span class="c1"># Define complex-valued constants for linear elasticity</span>
+<span class="n">mu</span>    <span class="o">=</span> <span class="n">fem</span><span class="o">.</span><span class="n">Constant</span><span class="p">(</span><span class="n">beam_mesh</span><span class="p">,</span> <span class="n">PETSc</span><span class="o">.</span><span class="n">ScalarType</span><span class="p">(</span><span class="n">E</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">nu</span><span class="p">))))</span>
+<span class="n">lamda</span> <span class="o">=</span> <span class="n">fem</span><span class="o">.</span><span class="n">Constant</span><span class="p">(</span><span class="n">beam_mesh</span><span class="p">,</span> <span class="n">PETSc</span><span class="o">.</span><span class="n">ScalarType</span><span class="p">(</span><span class="n">E</span> <span class="o">*</span> <span class="n">nu</span> <span class="o">/</span> <span class="p">((</span><span class="mi">1</span> <span class="o">+</span> <span class="n">nu</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">nu</span><span class="p">))))</span>
+
+<span class="k">def</span> <span class="nf">epsilon</span><span class="p">(</span><span class="n">u</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">ufl</span><span class="o">.</span><span class="n">sym</span><span class="p">(</span><span class="n">ufl</span><span class="o">.</span><span class="n">grad</span><span class="p">(</span><span class="n">u</span><span class="p">))</span>
+
+<span class="k">def</span> <span class="nf">sigma</span><span class="p">(</span><span class="n">u</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">lamda</span> <span class="o">*</span> <span class="n">ufl</span><span class="o">.</span><span class="n">nabla_div</span><span class="p">(</span><span class="n">u</span><span class="p">)</span> <span class="o">*</span> <span class="n">ufl</span><span class="o">.</span><span class="n">Identity</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">u</span><span class="p">))</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">mu</span> <span class="o">*</span> <span class="n">epsilon</span><span class="p">(</span><span class="n">u</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Defines the material properties and constitutive relations for linear elasticity,
+assuring compatibility with complex arithmetic using PETSc.ScalarType.</p>
+<p><strong>Function Space and Boundary Conditions</strong></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1">#--------------------------------------------------------------------</span>
+<span class="c1"># FUNCTION SPACE, TRIAL AND TEST FUNCTION</span>
+<span class="c1">#--------------------------------------------------------------------</span>
+<span class="n">V</span> <span class="o">=</span> <span class="n">fem</span><span class="o">.</span><span class="n">functionspace</span><span class="p">(</span><span class="n">beam_mesh</span><span class="p">,</span> <span class="p">(</span><span class="s2">&quot;CG&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">,(</span><span class="n">beam_mesh</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">dim</span><span class="p">,</span> <span class="p">)))</span>
+<span class="n">u</span> <span class="o">=</span> <span class="n">ufl</span><span class="o">.</span><span class="n">TrialFunction</span><span class="p">(</span><span class="n">V</span><span class="p">)</span>
+<span class="n">v</span> <span class="o">=</span> <span class="n">ufl</span><span class="o">.</span><span class="n">TestFunction</span><span class="p">(</span><span class="n">V</span><span class="p">)</span>
+<span class="c1">#--------------------------------------------------------------------</span>
+<span class="c1"># DIRICHLET BOUNDARY CONDITIONS</span>
+<span class="c1">#--------------------------------------------------------------------</span>
+<span class="k">def</span> <span class="nf">clamped_boundary</span><span class="p">(</span><span class="n">x</span><span class="p">):</span> <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="mi">0</span><span class="p">)</span>
+
+<span class="n">u_zero</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">((</span><span class="mi">0</span><span class="p">,)</span> <span class="o">*</span> <span class="n">beam_mesh</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">dim</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">default_scalar_type</span><span class="p">)</span>
+
+<span class="n">bc</span> <span class="o">=</span> <span class="n">fem</span><span class="o">.</span><span class="n">dirichletbc</span><span class="p">(</span><span class="n">u_zero</span><span class="p">,</span> <span class="n">fem</span><span class="o">.</span><span class="n">locate_dofs_geometrical</span><span class="p">(</span><span class="n">V</span><span class="p">,</span> <span class="n">clamped_boundary</span><span class="p">),</span> <span class="n">V</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Defines the function space, trial and test functions, and clamped boundary conditions.</p>
+<p><strong>Assemble Stiffness and Mass Matricess and Complex Matrix A</strong></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1">#--------------------------------------------------------------------</span>
+<span class="c1"># VARIATIONAL FORMS, STIFFNESS AND MASS MATRIX</span>
+<span class="c1">#--------------------------------------------------------------------</span>
+<span class="n">k_form</span> <span class="o">=</span> <span class="n">fem</span><span class="o">.</span><span class="n">form</span><span class="p">(</span><span class="n">ufl</span><span class="o">.</span><span class="n">inner</span><span class="p">(</span><span class="n">sigma</span><span class="p">(</span><span class="n">u</span><span class="p">),</span> <span class="n">epsilon</span><span class="p">(</span><span class="n">v</span><span class="p">))</span> <span class="o">*</span> <span class="n">ufl</span><span class="o">.</span><span class="n">dx</span><span class="p">)</span>
+<span class="n">m_form</span> <span class="o">=</span> <span class="n">fem</span><span class="o">.</span><span class="n">form</span><span class="p">(</span><span class="n">rho</span> <span class="o">*</span> <span class="n">ufl</span><span class="o">.</span><span class="n">inner</span><span class="p">(</span><span class="n">u</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span> <span class="o">*</span> <span class="n">ufl</span><span class="o">.</span><span class="n">dx</span><span class="p">)</span>
+
+<span class="c1"># Assemble matrices</span>
+<span class="n">K</span> <span class="o">=</span> <span class="n">assemble_matrix</span><span class="p">(</span><span class="n">k_form</span><span class="p">,</span> <span class="n">bcs</span><span class="o">=</span><span class="p">[</span><span class="n">bc</span><span class="p">],</span> <span class="n">diagonal</span><span class="o">=</span><span class="mi">62831</span><span class="p">)</span>
+<span class="n">K</span><span class="o">.</span><span class="n">assemble</span><span class="p">()</span>
+
+<span class="n">M</span> <span class="o">=</span> <span class="n">assemble_matrix</span><span class="p">(</span><span class="n">m_form</span><span class="p">,</span> <span class="n">bcs</span><span class="o">=</span><span class="p">[</span><span class="n">bc</span><span class="p">],</span> <span class="n">diagonal</span><span class="o">=</span><span class="mf">1.</span><span class="o">/</span><span class="mi">62831</span><span class="p">)</span>
+<span class="n">M</span><span class="o">.</span><span class="n">assemble</span><span class="p">()</span>
+<span class="c1">#--------------------------------------------------------------------</span>
+<span class="c1"># CREATE COMPLEX STIFFNESS MATRIX</span>
+<span class="c1">#--------------------------------------------------------------------</span>
+
+<span class="n">A</span> <span class="o">=</span> <span class="n">create_complex_stiffness</span><span class="p">(</span><span class="n">K</span><span class="p">,</span><span class="n">K</span><span class="p">)</span>
+
+</pre></div>
+</div>
+<p>Assembles the stiffness and mass matrices using variational forms
+and creates a complex-valued stiffness matrix
+using the previously defined function.</p>
+<p><strong>Solve the Eigenvalue Problem and Writes the Results</strong></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1">#--------------------------------------------------------------------</span>
+<span class="c1"># SLEPc EIGENSOLVER </span>
+<span class="c1">#--------------------------------------------------------------------</span>
+<span class="c1">#</span>
+<span class="c1"># Set up SLEPc eigenvalue solver</span>
+<span class="n">eigensolver</span> <span class="o">=</span> <span class="n">SLEPc</span><span class="o">.</span><span class="n">EPS</span><span class="p">()</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">MPI</span><span class="o">.</span><span class="n">COMM_WORLD</span><span class="p">)</span>
+<span class="n">eigensolver</span><span class="o">.</span><span class="n">setOperators</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">M</span><span class="p">)</span>
+<span class="n">eigensolver</span><span class="o">.</span><span class="n">setProblemType</span><span class="p">(</span><span class="n">SLEPc</span><span class="o">.</span><span class="n">EPS</span><span class="o">.</span><span class="n">ProblemType</span><span class="o">.</span><span class="n">GHEP</span><span class="p">)</span>
+<span class="n">eigensolver</span><span class="o">.</span><span class="n">setDimensions</span><span class="p">(</span><span class="mi">16</span><span class="p">)</span>  <span class="c1"># Number of eigenpairs to compute</span>
+<span class="n">eigensolver</span><span class="o">.</span><span class="n">setFromOptions</span><span class="p">()</span>
+
+<span class="c1"># Solve the eigenvalue problem</span>
+<span class="n">eigensolver</span><span class="o">.</span><span class="n">solve</span><span class="p">()</span>
+<span class="c1">#--------------------------------------------------------------------</span>
+<span class="c1"># OUTPUT RESULTS</span>
+<span class="c1">#--------------------------------------------------------------------</span>
+<span class="n">n_converged</span> <span class="o">=</span> <span class="n">eigensolver</span><span class="o">.</span><span class="n">getConverged</span><span class="p">()</span>
+<span class="k">if</span> <span class="n">n_converged</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+    <span class="n">vr</span><span class="p">,</span> <span class="n">vi</span> <span class="o">=</span> <span class="n">A</span><span class="o">.</span><span class="n">getVecs</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="n">n_converged</span><span class="p">,</span> <span class="mi">16</span><span class="p">)):</span>
+        <span class="n">eigval</span> <span class="o">=</span> <span class="n">eigensolver</span><span class="o">.</span><span class="n">getEigenpair</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">vr</span><span class="p">,</span> <span class="n">vi</span><span class="p">)</span>
+        <span class="n">omega</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">eigval</span><span class="o">.</span><span class="n">real</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Eigenvalue </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">: λ = </span><span class="si">{</span><span class="n">eigval</span><span class="si">:</span><span class="s2">.6e</span><span class="si">}</span><span class="s2">, ω = </span><span class="si">{</span><span class="n">omega</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2"> rad/s&quot;</span><span class="p">)</span>
+
+</pre></div>
+</div>
+<p><strong>Remarks</strong></p>
+<ul class="simple">
+<li><p>Direct matrix operations (e.g., MatCopy) may fail if the matrix is not in a
+fully compatible state. This was resolved by using setValuesCSR to explicitly
+construct the complex matrix.</p></li>
+<li><p>Enabling complex128 mode ensures compatibility for problems involving
+imaginary units.</p></li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>In case of an error  message try first <strong>source dolfinx-complex-mode</strong> in your
+Docker environment.</p>
+</div>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+        </div>
+        <div class="sidebar">
+          
+          <h3>Table of Contents</h3>
+          <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../Intro/intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../LinearElastostatics/LinearElastostatics.html">Linear Elastostatics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../LinearElastodynamics/LinearElastodynamics.html">Linear Elastodynamics</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="GeneralAspects.html">General aspects</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="DirichletBCs.html">Dirichlet boundary conditions</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="ComplexEigenproblems.html">Complex Eigenvalue Problems</a></li>
+</ul>
+</li>
+</ul>
+
+          <search role="search">
+            <h3 style="margin-top: 1.5em;">Search</h3>
+            <form class="search" action="../search.html" method="get">
+                <input type="text" name="q" />
+                <input type="submit" value="Go" />
+            </form>
+          </search>
+
+        </div>
+        <div class="clearer"></div>
+      </div>
+    </div>
+
+    <div class="footer-wrapper">
+      <div class="footer">
+        <div class="left">
+          <div role="navigation" aria-label="Related">
+            <a href="exampleSciPyReal.html" title="Example Using SciPy and SLEPc for a Real Eigenvalue Problem"
+              >previous</a> |
+            <a href="../genindex.html" title="General Index"
+              >index</a>
+          </div>
+          <div role="note" aria-label="source link">
+              <br/>
+              <a href="../_sources/GeneralAspects/exampleSLEPcComplex.rst.txt"
+                rel="nofollow">Show Source</a>
+          </div>
+        </div>
+
+        <div class="right">
+          
+    <div class="footer" role="contentinfo">
+    &#169; Copyright 2024, Uwe Muhlich.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.2.3.
+    </div>
+        </div>
+        <div class="clearer"></div>
+      </div>
+    </div>
+
+  </body>
+</html>
